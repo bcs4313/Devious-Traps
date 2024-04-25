@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ExampleEnemy.src
+namespace MoaiEnemy.src
 {
     // Credit to xCeezyx for SendEnemyInside/Outside code! makes my life so much easier.
     // https://github.com/xCeezyx/LethalEscape/tree/main?tab=readme-ov-file

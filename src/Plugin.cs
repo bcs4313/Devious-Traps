@@ -11,9 +11,10 @@ using BepInEx.Configuration;
 using LethalConfig.ConfigItems;
 using LethalConfig.ConfigItems.Options;
 using LethalConfig;
-using ExampleEnemy.src.MoaiNormal;
+using MoaiEnemy.src.MoaiNormal;
+using System.Collections.Generic;
 
-namespace ExampleEnemy
+namespace MoaiEnemy
 {
     [BepInDependency("LethalNetworkAPI")]
     [BepInDependency(LethalLib.Plugin.ModGUID)]
@@ -38,7 +39,7 @@ namespace ExampleEnemy
             bindVars();
 
             // asset loading phase
-            var ExampleEnemy = Assets.MainAssetBundle.LoadAsset<EnemyType>("MoaiEnemy");
+            var MoaiEnemy = Assets.MainAssetBundle.LoadAsset<EnemyType>("MoaiEnemy");
             var tlTerminalNode = Assets.MainAssetBundle.LoadAsset<TerminalNode>("MoaiEnemyTN");
             var tlTerminalKeyword = Assets.MainAssetBundle.LoadAsset<TerminalKeyword>("MoaiEnemyTK");
 
@@ -51,13 +52,13 @@ namespace ExampleEnemy
             var MoaiRedTerminalKeyword = Assets.MainAssetBundle.LoadAsset<TerminalKeyword>("MoaiRedTK");
 
             // debug phase
-            Debug.Log("EX BUNDLE: " + Assets.MainAssetBundle.ToString());
-            Debug.Log("EX ENEMY: " + ExampleEnemy);
-            Debug.Log("EX TK: " + tlTerminalKeyword);
-            Debug.Log("EX TN: " + tlTerminalNode);
-            Debug.Log("BLUE ENEMY: " + MoaiBlue);
-            Debug.Log("BLUE TK: " + MoaiBlueTerminalNode);
-            Debug.Log("BLUE TN: " + MoaiBlueTerminalKeyword);
+            Debug.Log("MOAI ENEMY BUNDLE: " + Assets.MainAssetBundle.ToString());
+            Debug.Log("MOAINORM ENEMY: " + MoaiEnemy);
+            Debug.Log("MOAINORM TK: " + tlTerminalKeyword);
+            Debug.Log("MOAINORM TN: " + tlTerminalNode);
+            Debug.Log("MOAIBLUE ENEMY: " + MoaiBlue);
+            Debug.Log("MOAIBLUE TK: " + MoaiBlueTerminalNode);
+            Debug.Log("MOAIBLUE TN: " + MoaiBlueTerminalKeyword);
             //Debug.Log("RED ENEMY: " + MoaiRed);
             //Debug.Log("RED TK: " + MoaiRedTerminalNode);
             //Debug.Log("RED TN: " + MoaiRedTerminalKeyword);
@@ -65,12 +66,12 @@ namespace ExampleEnemy
             UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
             // register phase 
-            NetworkPrefabs.RegisterNetworkPrefab(ExampleEnemy.enemyPrefab);
+            NetworkPrefabs.RegisterNetworkPrefab(MoaiEnemy.enemyPrefab);
             NetworkPrefabs.RegisterNetworkPrefab(MoaiBlue.enemyPrefab);
             //NetworkPrefabs.RegisterNetworkPrefab(MoaiRed.enemyPrefab);
 
             // rarity range is 0-100 normally
-            RegisterEnemy(ExampleEnemy, (int)(21 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, tlTerminalNode, tlTerminalKeyword);
+            RegisterEnemy(MoaiEnemy, (int)(120 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, tlTerminalNode, tlTerminalKeyword);
             RegisterEnemy(MoaiBlue, (int)(14 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Outside, MoaiBlueTerminalNode, MoaiBlueTerminalKeyword);
             //RegisterEnemy(MoaiRed, (int)(7 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, MoaiRedTerminalNode, MoaiRedTerminalKeyword); 
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
@@ -91,6 +92,38 @@ namespace ExampleEnemy
             }
             Debug.Log("MOAI: Registering Moai Net Messages");
             networkHandler.setup();
+
+            On.RoundManager.LoadNewLevel += (On.RoundManager.orig_LoadNewLevel orig, global::RoundManager self, int randomSeed, global::SelectableLevel newLevel) =>
+            {
+                setSpawnProbabilities();
+                orig.Invoke(self, randomSeed, newLevel);
+            };
+        }
+
+        
+
+        static void setSpawnProbabilities()
+        {
+            float r = UnityEngine.Random.RandomRange(0.0f, 1.0f + (moaiGlobalRarity.Value  - 1));
+
+            if (r < 0.1)
+            {
+                MoaiEnemyAI.rawSpawnProbability = 1.0f;
+            }
+            else if (r < 0.2)
+            {
+                MoaiEnemyAI.rawSpawnProbability = 0.5f;
+            }
+            else if (r < 0.33)
+            {
+                MoaiEnemyAI.rawSpawnProbability = 0.16f;
+            }
+            else
+            {
+                MoaiEnemyAI.rawSpawnProbability = 0f;
+            }
+
+            Debug.Log("MOAI rawspawn multiplier: " + MoaiEnemyAI.rawSpawnProbability);
         }
 
         // SETTINGS SECTION

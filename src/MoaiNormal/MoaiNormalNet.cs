@@ -3,8 +3,9 @@ using System;
 using UnityEngine.AI;
 using UnityEngine;
 using LethalNetworkAPI;
+using HarmonyLib;
 
-namespace ExampleEnemy.src.MoaiNormal
+namespace MoaiEnemy.src.MoaiNormal
 {
     public class MoaiNormalNet
     {
@@ -145,12 +146,12 @@ namespace ExampleEnemy.src.MoaiNormal
         private void m_moaiSoundPlay(moaiSoundPkg moaiPkg)
         {
             // ai.NetworkObjectId synchronizes across moai
-            ExampleEnemyAI target = null;
+            MOAIAICORE target = null;
             Debug.Log("MOAI: received moaisound pkg from host: " + moaiPkg.netId.ToString() + " :: " + moaiPkg.soundName);
-            ExampleEnemyAI[] moais = GameObject.FindObjectsOfType<ExampleEnemyAI>();
+            MOAIAICORE[] moais = GameObject.FindObjectsOfType<MOAIAICORE>();
             for (int i = 0; i < moais.Length; i++)
             {
-                ExampleEnemyAI ai = moais[i];
+                MOAIAICORE ai = moais[i];
                 if (ai.NetworkObjectId == moaiPkg.netId)
                 {
                     target = ai;
@@ -203,13 +204,13 @@ namespace ExampleEnemy.src.MoaiNormal
 
         private void m_moaiSizeSet(moaiSizePkg sizePkg)
         {
-            ExampleEnemyAI target = null;
+            MOAIAICORE target = null;
             Debug.Log(sizePkg);
             Debug.Log("MOAI: received moaisize pkg from host: " + sizePkg.netId.ToString() + " :: " + sizePkg.size);
-            ExampleEnemyAI[] moais = GameObject.FindObjectsOfType<ExampleEnemyAI>();
+            MOAIAICORE[] moais = GameObject.FindObjectsOfType<MOAIAICORE>();
             for (int i = 0; i < moais.Length; i++)
             {
-                ExampleEnemyAI ai = moais[i];
+                MOAIAICORE ai = moais[i];
                 if (ai.NetworkObjectId == sizePkg.netId)
                 {
                     target = ai;
@@ -241,12 +242,12 @@ namespace ExampleEnemy.src.MoaiNormal
 
         private void m_moaiAttachBody(moaiAttachBodyPkg bodyPkg)
         {
-            ExampleEnemyAI target = null;
+            MOAIAICORE target = null;
             Debug.Log("MOAI: received moaiattachbody pkg from host: " + bodyPkg.netId.ToString() + " :: " + bodyPkg.humanNetId);
-            ExampleEnemyAI[] moais = GameObject.FindObjectsOfType<ExampleEnemyAI>();
+            MOAIAICORE[] moais = GameObject.FindObjectsOfType<MOAIAICORE>();
             for (int i = 0; i < moais.Length; i++)
             {
-                ExampleEnemyAI ai = moais[i];
+                MOAIAICORE ai = moais[i];
                 if (ai.NetworkObjectId == bodyPkg.netId)
                 {
                     target = ai;
@@ -277,7 +278,6 @@ namespace ExampleEnemy.src.MoaiNormal
 
         private void m_moaiDestroyBody(moaiDestroyBodyPkg destroyPkg)
         {
-            ExampleEnemyAI target = null;
             Debug.Log("MOAI: received moaidestroybody pkg from host: " + destroyPkg.netId.ToString());
 
             for (int i = 0; i < RoundManager.Instance.playersManager.allPlayerScripts.Length; i++)
@@ -297,12 +297,12 @@ namespace ExampleEnemy.src.MoaiNormal
 
         private void m_moaiHalo(moaiHaloPkg haloPkg)
         {
-            ExampleEnemyAI target = null;
+            MOAIAICORE target = null;
             Debug.Log("MOAI: received moaisethalo pkg from host: " + haloPkg.netId.ToString());
-            ExampleEnemyAI[] moais = GameObject.FindObjectsOfType<ExampleEnemyAI>();
+            MOAIAICORE[] moais = GameObject.FindObjectsOfType<MOAIAICORE>();
             for (int i = 0; i < moais.Length; i++)
             {
-                ExampleEnemyAI ai = moais[i];
+                MOAIAICORE ai = moais[i];
                 if (ai.NetworkObjectId == haloPkg.netId)
                 {
                     target = ai;
