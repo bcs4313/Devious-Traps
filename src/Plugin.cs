@@ -59,21 +59,21 @@ namespace MoaiEnemy
             Debug.Log("MOAIBLUE ENEMY: " + MoaiBlue);
             Debug.Log("MOAIBLUE TK: " + MoaiBlueTerminalNode);
             Debug.Log("MOAIBLUE TN: " + MoaiBlueTerminalKeyword);
-            //Debug.Log("RED ENEMY: " + MoaiRed);
-            //Debug.Log("RED TK: " + MoaiRedTerminalNode);
-            //Debug.Log("RED TN: " + MoaiRedTerminalKeyword);
+            Debug.Log("RED ENEMY: " + MoaiRed);
+            Debug.Log("RED TK: " + MoaiRedTerminalNode);
+            Debug.Log("RED TN: " + MoaiRedTerminalKeyword);
 
             UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
             // register phase 
             NetworkPrefabs.RegisterNetworkPrefab(MoaiEnemy.enemyPrefab);
             NetworkPrefabs.RegisterNetworkPrefab(MoaiBlue.enemyPrefab);
-            //NetworkPrefabs.RegisterNetworkPrefab(MoaiRed.enemyPrefab);
+            NetworkPrefabs.RegisterNetworkPrefab(MoaiRed.enemyPrefab);
 
             // rarity range is 0-100 normally
             RegisterEnemy(MoaiEnemy, (int)(120 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, tlTerminalNode, tlTerminalKeyword);
             RegisterEnemy(MoaiBlue, (int)(14 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Outside, MoaiBlueTerminalNode, MoaiBlueTerminalKeyword);
-            //RegisterEnemy(MoaiRed, (int)(7 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, MoaiRedTerminalNode, MoaiRedTerminalKeyword); 
+            RegisterEnemy(MoaiRed, (int)(700 / moaiGlobalRarity.Value), LevelTypes.All, SpawnType.Daytime, MoaiRedTerminalNode, MoaiRedTerminalKeyword); 
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
             // Required by https://github.com/EvaisaDev/UnityNetcodePatcher maybe?
@@ -106,17 +106,17 @@ namespace MoaiEnemy
         {
             float r = UnityEngine.Random.RandomRange(0.0f, 1.0f + (moaiGlobalRarity.Value  - 1));
 
-            if (r < 0.1)
+            if (r < 0.06)
             {
                 MoaiEnemyAI.rawSpawnProbability = 1.0f;
-            }
-            else if (r < 0.2)
+            } 
+            else if (r < 0.12)
             {
                 MoaiEnemyAI.rawSpawnProbability = 0.5f;
             }
-            else if (r < 0.33)
+            else if (r < 0.20)
             {
-                MoaiEnemyAI.rawSpawnProbability = 0.16f;
+                MoaiEnemyAI.rawSpawnProbability = 0.25f;
             }
             else
             {
@@ -131,14 +131,12 @@ namespace MoaiEnemy
         public static ConfigEntry<float> moaiGlobalSize;
         public static ConfigEntry<float> moaiGlobalSizeVar;
         public static ConfigEntry<float> moaiGlobalMusicVol;
-        public static ConfigEntry<float> moaiGlobalVoiceVol;
         public static ConfigEntry<float> moaiGlobalRarity;
         public static ConfigEntry<float> moaiGlobalSpeed;
 
         public void bindVars()
         {
-            moaiGlobalMusicVol = Config.Bind("Global", "Chase Sound Volume", 0.6f, "Changes the volume of the MOAHHHH sound during chase. Also affects all chase sound variants.");
-            moaiGlobalVoiceVol = Config.Bind("Global", "Idle Sound Volume", 0.6f, "Changes the volume of moai sounds when they aren't chasing you. Changing this could make moai more or less sneaky.");
+            moaiGlobalMusicVol = Config.Bind("Global", "Enemy Sound Volume", 0.6f, "Changes the volume of all moai sounds. May make moai more sneaky as well.");
             moaiGlobalSizeVar = Config.Bind("Global", "Size Variant Chance", 0.2f, "The chance of a moai to spawn in a randomly scaled size. Affects their pitch too.");
             moaiGlobalSize = Config.Bind("Global", "Size Multiplier", 1f, "Changes the size of all moai models. Scales pretty violently. Affects SFX pitch.");
             moaiGlobalRarity = Config.Bind("Global", "Enemy Rarity Multiplier", 1f, "How rare are moai? A 2x multiplier makes them 2x more rare, and a 0.25x multiplier would make them 4x more common.");
@@ -166,13 +164,6 @@ namespace MoaiEnemy
                 Max = 1f
             });
 
-            var volume2Slider = new FloatSliderConfigItem(moaiGlobalVoiceVol, new FloatSliderOptions
-            {
-                RequiresRestart = false,
-                Min = 0.0f,
-                Max = 1f
-            });
-
             var raritySlider = new FloatSliderConfigItem(moaiGlobalRarity, new FloatSliderOptions
             {
                 RequiresRestart = true,
@@ -188,7 +179,6 @@ namespace MoaiEnemy
             });
             
             LethalConfigManager.AddConfigItem(volumeSlider);
-            LethalConfigManager.AddConfigItem(volume2Slider);
             LethalConfigManager.AddConfigItem(sizeSlider);
             LethalConfigManager.AddConfigItem(sizeVarSlider);
             LethalConfigManager.AddConfigItem(raritySlider);

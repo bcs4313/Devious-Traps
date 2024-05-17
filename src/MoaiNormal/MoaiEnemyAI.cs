@@ -81,7 +81,7 @@ namespace MoaiEnemy.src.MoaiNormal
         {
             RoundManager m = RoundManager.Instance;
 
-            if (!gameObject.name.Contains("Blue"))
+            if (!gameObject.name.Contains("Blue") || isEnemyDead)
             {
                 return;
             }
@@ -93,6 +93,7 @@ namespace MoaiEnemy.src.MoaiNormal
 
             //LogIfDebugBuild("MOAI: spawning LBolt");
             ticksTillThunder = 2 + Math.Min((float)Math.Pow(Vector3.Distance(transform.position, targetPlayer.transform.position), 1.75), 180);
+            if(ticksTillThunder < 25) { ticksTillThunder = 25; }
             Vector3 position = serverPosition;
             position.y += (float)(enemyRandom.NextDouble() * ticksTillThunder * 0.2 + 4 * this.gameObject.transform.localScale.x) * Math.Sign(enemyRandom.Next(-100, 100));
             position.x += (float)(enemyRandom.NextDouble() * ticksTillThunder * 0.2 + 4 * this.gameObject.transform.localScale.x) * Math.Sign(enemyRandom.Next(-100, 100));

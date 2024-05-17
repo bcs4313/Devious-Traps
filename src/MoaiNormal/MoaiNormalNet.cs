@@ -147,7 +147,7 @@ namespace MoaiEnemy.src.MoaiNormal
         {
             // ai.NetworkObjectId synchronizes across moai
             MOAIAICORE target = null;
-            Debug.Log("MOAI: received moaisound pkg from host: " + moaiPkg.netId.ToString() + " :: " + moaiPkg.soundName);
+            //Debug.Log("MOAI: received moaisound pkg from host: " + moaiPkg.netId.ToString() + " :: " + moaiPkg.soundName);
             MOAIAICORE[] moais = GameObject.FindObjectsOfType<MOAIAICORE>();
             for (int i = 0; i < moais.Length; i++)
             {
@@ -171,7 +171,15 @@ namespace MoaiEnemy.src.MoaiNormal
                     break;
                 case "creatureVoice":
                     target.stopAllSound();
-                    target.creatureVoice.Play();
+
+                    // start time intervals, for variance
+                    double[] timeIntervals = [0.0, 0.8244, 11.564, 29.11, 34.491, 37.840, 48.689, 64.518, 89.535, 92.111];
+                    int selectedTime = UnityEngine.Random.Range(0, timeIntervals.Length);
+
+                    //Debug.Log("selected time: " + timeIntervals[selectedTime]);
+                    target.creatureVoice.Play();  // time is in seconds
+                    target.creatureVoice.SetScheduledStartTime(timeIntervals[selectedTime]);
+                    target.creatureVoice.time = (float)timeIntervals[selectedTime];
                     break;
                 case "creatureFood":
                     target.creatureSFX.Stop();
@@ -179,26 +187,61 @@ namespace MoaiEnemy.src.MoaiNormal
                     target.creatureFood.Play();
                     break;
                 case "creatureEat":
-                    Debug.Log("Calling creatureEat on " + target + " :: " + target.creatureEat);
+                    //Debug.Log("Calling creatureEat on " + target + " :: " + target.creatureEat);
                     target.creatureSFX.Stop();
                     target.creatureVoice.Stop();
                     target.creatureEat.Play();
                     break;
                 case "creatureEatHuman":
-                    Debug.Log("Calling creatureEatHuman on " + target + " :: " + target.creatureEatHuman);
+                    //Debug.Log("Calling creatureEatHuman on " + target + " :: " + target.creatureEatHuman);
                     target.creatureSFX.Stop();
                     target.creatureVoice.Stop();
                     target.creatureEatHuman.Play();
                     break;
                 case "creatureHit":
-                    Debug.Log("Calling creatureHit on " + target + " :: " + target.creatureEatHuman);
+                    //Debug.Log("Calling creatureHit on " + target + " :: " + target.creatureEatHuman);
                     target.creatureHit.Play();
                     break;
                 case "creatureDeath":
-                    Debug.Log("Calling creatureDeath on " + target + " :: " + target.creatureEatHuman);
+                    //Debug.Log("Calling creatureDeath on " + target + " :: " + target.creatureEatHuman);
                     target.stopAllSound();
                     target.creatureDeath.Play();
                     break;
+                case "creatureBelch":
+                    //Debug.Log("Calling creatureBelch on " + target + " :: " + target.creatureEatHuman);
+                    target.creatureBelch.Play();
+                    break;
+                case "slidingBasic":
+                    target.stopSlideSounds();
+                    target.isSliding = true;
+                    target.slidingBasic.Play();
+                    break;
+                case "slidingGravel":
+                    target.stopSlideSounds();
+                    target.isSliding = true;
+                    target.slidingGravel.Play();
+                    break;
+                case "slidingMetal":
+                    target.stopSlideSounds();
+                    target.isSliding = true;
+                    target.slidingMetal.Play();
+                    break;
+                case "slidingSnow":
+                    target.stopSlideSounds();
+                    target.isSliding = true;
+                    target.slidingSnow.Play();
+                    break;
+                case "slidingWood":
+                    target.stopSlideSounds();
+                    target.isSliding = true;
+                    target.slidingWood.Play();
+                    break;
+                case "stopSliding":
+                    target.stopSlideSounds();
+                    target.isSliding = false;
+                    break;
+
+
             }
         }
 
@@ -267,9 +310,18 @@ namespace MoaiEnemy.src.MoaiNormal
                 {
                     if (player.NetworkObject.NetworkObjectId == bodyPkg.humanNetId)
                     {
-                        Debug.Log("MOAI: Successfully attached body with id = " + bodyPkg.humanNetId);
                         player.deadBody.attachedLimb = player.deadBody.bodyParts[5];
-                        player.deadBody.attachedTo = target.eye.transform;
+
+                        if(target.mouth)
+                        {
+                            Debug.Log("MOAI: Successfully attached body to mouth with id = " + bodyPkg.humanNetId);
+                            player.deadBody.attachedTo = target.mouth.transform;
+                        }
+                        else
+                        {
+                            Debug.Log("MOAI: Successfully attached body to eye with id = " + bodyPkg.humanNetId);
+                            player.deadBody.attachedTo = target.eye.transform;
+                        }
                         player.deadBody.canBeGrabbedBackByPlayers = true;
                     }
                 }
