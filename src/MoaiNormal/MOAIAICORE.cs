@@ -151,9 +151,6 @@ namespace MoaiEnemy.src.MoaiNormal
                 Plugin.networkHandler.s_moaiHalo.SendAllClients(new moaiHaloPkg(NetworkObject.NetworkObjectId, false));
             }
 
-            Plugin.networkHandler.s_moaiSoundPlay.SendAllClients(new moaiSoundPkg(NetworkObject.NetworkObjectId, "creatureBelch"));
-            Plugin.networkHandler.s_moaiSoundPlay.SendAllClients(new moaiSoundPkg(NetworkObject.NetworkObjectId, "creatureVoice"));
-
             // size variant modification
             if (RoundManager.Instance.IsHost && UnityEngine.Random.Range(0.0f, 1.0f) <= moaiGlobalSizeVar.Value)
             {
@@ -193,21 +190,6 @@ namespace MoaiEnemy.src.MoaiNormal
             slidingSnow.volume = moaiGlobalMusicVol.Value;
             slidingWood.volume = moaiGlobalMusicVol.Value / 1.3f;
 
-            // enforce navmeshagent size
-            if (RoundManager.Instance.IsHost)
-            {
-                if (moaiGlobalSize.Value < 1)
-                {
-                    var p = (double)moaiGlobalSize.Value;
-                    Plugin.networkHandler.s_moaiSizeSet.SendAllClients(new moaiSizePkg(NetworkObject.NetworkObjectId, moaiGlobalSize.Value, (float)Math.Pow(p, 0.3)));
-                }
-                else
-                {
-                    Plugin.networkHandler.s_moaiSizeSet.SendAllClients(new moaiSizePkg(NetworkObject.NetworkObjectId, moaiGlobalSize.Value, moaiGlobalSize.Value));
-                }
-            }
-
-
             timeSinceHittingLocalPlayer = 0;
             //creatureAnimator.SetTrigger("startWalk");
             timeSinceNewRandPos = 0;
@@ -220,6 +202,9 @@ namespace MoaiEnemy.src.MoaiNormal
             currentBehaviourStateIndex = (int)State.SearchingForPlayer;
             // We make the enemy start searching. This will make it start wandering around.
             StartSearch(transform.position);
+
+            Plugin.networkHandler.s_moaiSoundPlay.SendAllClients(new moaiSoundPkg(NetworkObject.NetworkObjectId, "creatureBelch"));
+            Plugin.networkHandler.s_moaiSoundPlay.SendAllClients(new moaiSoundPkg(NetworkObject.NetworkObjectId, "creatureVoice"));
         }
 
         public void baseUpdate() {
@@ -798,7 +783,7 @@ namespace MoaiEnemy.src.MoaiNormal
             }
         }
 
-        bool FoundClosestPlayerInRange(float r, bool needLineOfSight)
+        public bool FoundClosestPlayerInRange(float r, bool needLineOfSight)
         {
             if(recovering) { return false; }
             moaiTargetClosestPlayer(range: r, requireLineOfSight: needLineOfSight);
@@ -971,10 +956,7 @@ namespace MoaiEnemy.src.MoaiNormal
 
         // method to play a sound with a target string id
         // can be overridden in moai variants (thus it is usable in MoaiNormalNet)
-        public void playSoundId(String id)
-        {
-            // do nothing
-        }
+        public virtual void playSoundId(String id) { }
 
         public void stopAllSound()
         {

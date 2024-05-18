@@ -187,29 +187,30 @@ namespace MoaiEnemy.src.MoaiNormal
                     target.creatureFood.Play();
                     break;
                 case "creatureEat":
-                    //Debug.Log("Calling creatureEat on " + target + " :: " + target.creatureEat);
                     target.creatureSFX.Stop();
                     target.creatureVoice.Stop();
                     target.creatureEat.Play();
                     break;
                 case "creatureEatHuman":
-                    //Debug.Log("Calling creatureEatHuman on " + target + " :: " + target.creatureEatHuman);
                     target.creatureSFX.Stop();
                     target.creatureVoice.Stop();
                     target.creatureEatHuman.Play();
                     break;
                 case "creatureHit":
-                    //Debug.Log("Calling creatureHit on " + target + " :: " + target.creatureEatHuman);
                     target.creatureHit.Play();
                     break;
                 case "creatureDeath":
-                    //Debug.Log("Calling creatureDeath on " + target + " :: " + target.creatureEatHuman);
                     target.stopAllSound();
                     target.creatureDeath.Play();
                     break;
                 case "creatureBelch":
-                    //Debug.Log("Calling creatureBelch on " + target + " :: " + target.creatureEatHuman);
                     target.creatureBelch.Play();
+                    break;
+                case "creatureBlitz":
+                    target.playSoundId("creatureBlitz");
+                    break;
+                case "creaturePrepare":
+                    target.playSoundId("creaturePrepare");
                     break;
                 case "slidingBasic":
                     target.stopSlideSounds();
@@ -264,7 +265,7 @@ namespace MoaiEnemy.src.MoaiNormal
                 Debug.LogError("moaisizeset call failed:: " + sizePkg.netId.ToString() + " :: " + sizePkg.size);
                 return;
             }
-            target.gameObject.transform.localScale *= sizePkg.size;
+            target.gameObject.transform.localScale *= (sizePkg.size * Plugin.moaiGlobalSize.Value);
             target.gameObject.GetComponent<NavMeshAgent>().height *= sizePkg.size;
 
             target.creatureSFX.pitch /= sizePkg.pitchAlter;
