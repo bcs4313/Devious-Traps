@@ -10,7 +10,7 @@ using BepInEx.Configuration;
 
 // stores public vars for the plugin that relate to
 // config files.
-namespace MoaiEnemy
+namespace EasterIsland
 {
     internal class ConfigModel
     {
