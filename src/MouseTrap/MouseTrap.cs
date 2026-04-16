@@ -132,7 +132,7 @@ namespace DeviousTraps.src.MouseTrap
             string[] list_entries = list.Split(",");
             foreach (string entry in list_entries)
             {
-                var entry_stripped = entry.ToLower().Trim();
+                var entry_stripped = entry.ToLower().Trim(); 
 
                 if (gobj)
                 {

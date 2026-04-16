@@ -391,14 +391,21 @@ namespace DeviousTraps.src
             }
         }
 
+        // facePosition uses easing to prevent the turret from "snapping" to players, making encounters more fair
+        public static float AxleRotationSpeed = 1.0f;
         public void facePosition(Vector3 pos)
         {
             Vector3 directionToTarget = pos - transform.position;
             directionToTarget.y = 0f; // Ignore vertical difference
             if (directionToTarget != Vector3.zero)
             {
+                // use Lerp angle smoothing to achieve target rotation
                 Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
-                transform.rotation = Quaternion.Euler(0f, targetRotation.eulerAngles.y, 0f);
+
+                // rotate at a specific speed, using DeltaTime to prevent fps specific speed differences 
+                float EulerYTarget = Mathf.LerpAngle(transform.rotation.eulerAngles.y, targetRotation.eulerAngles.y, Time.deltaTime * AxleRotationSpeed);
+
+                transform.rotation = Quaternion.Euler(0f, EulerYTarget, 0f);
             }
         }
     }

@@ -53,9 +53,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="dlls\HighDef\" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\Assembly_References_For_V73\Assembly-CSharp.dll</HintPath>
     </Reference>
