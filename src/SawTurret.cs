@@ -335,8 +335,8 @@ namespace DeviousTraps.src
         //public static float SawLaunchForce = 3000f; default
         public void Fire()
         {
-            // Compute direction toward player from spawn point
-            Vector3 dir = (TargetPlayer.transform.position - SawSpawnPoint.position).normalized;
+            // direction fired simply is the rotation of the turret itself
+            Vector3 dir = transform.forward;
 
             // Spawn with rotation matching the direction
             Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
@@ -392,19 +392,18 @@ namespace DeviousTraps.src
         }
 
         // facePosition uses easing to prevent the turret from "snapping" to players, making encounters more fair
-        public static float AxleRotationSpeed = 1.0f;
         public void facePosition(Vector3 pos)
         {
             Vector3 directionToTarget = pos - transform.position;
-            directionToTarget.y = 0f; // Ignore vertical difference
+            directionToTarget.y = 0f;
             if (directionToTarget != Vector3.zero)
             {
-                // use Lerp angle smoothing to achieve target rotation
                 Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
-
-                // rotate at a specific speed, using DeltaTime to prevent fps specific speed differences 
-                float EulerYTarget = Mathf.LerpAngle(transform.rotation.eulerAngles.y, targetRotation.eulerAngles.y, Time.deltaTime * AxleRotationSpeed);
-
+                float EulerYTarget = Mathf.MoveTowardsAngle(
+                    transform.rotation.eulerAngles.y,
+                    targetRotation.eulerAngles.y,
+                    Plugin.SawRotationSpeed.Value * Time.deltaTime
+                );
                 transform.rotation = Quaternion.Euler(0f, EulerYTarget, 0f);
             }
         }

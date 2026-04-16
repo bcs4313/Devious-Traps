@@ -347,14 +347,12 @@ namespace DeviousTraps.src
         public void Fire()
         {
             Vector3 dir;
-            if (TargetPlayer)
-            {
-                dir = (TargetPlayer.transform.position - WaveSpawnPoint1.position).normalized;
-            }
-            else
-            {
-                dir = (LastKnownPosition - WaveSpawnPoint1.position).normalized;
-            }
+            Vector3 targetPos = TargetPlayer ? TargetPlayer.transform.position : LastKnownPosition;
+
+            // Horizontal direction from turret facing, vertical from target
+            Vector3 horizontal = new Vector3(RotationPoint.forward.x, 0f, RotationPoint.forward.z).normalized;
+            float verticalAngle = (targetPos.y - WaveSpawnPoint1.position.y) / Vector3.Distance(transform.position, targetPos);
+            dir = (horizontal + Vector3.up * verticalAngle).normalized;
 
             // Base rotation that points Z+ toward target
             Quaternion lookRot = Quaternion.LookRotation(dir, Vector3.up);
@@ -506,19 +504,18 @@ namespace DeviousTraps.src
 
 
         // facePosition uses easing to prevent the turret from "snapping" to players, making encounters more fair
-        public static float AxleRotationSpeed = 1.0f;
         public void facePosition(Vector3 pos)
         {
             Vector3 directionToTarget = pos - transform.position;
-            directionToTarget.y = 0f; // Ignore vertical difference
+            directionToTarget.y = 0f;
             if (directionToTarget != Vector3.zero)
             {
-                // use Lerp angle smoothing to achieve target rotation
                 Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
-
-                // rotate at a specific speed, using DeltaTime to prevent fps specific speed differences 
-                float EulerYTarget = Mathf.LerpAngle(RotationPoint.rotation.eulerAngles.y, targetRotation.eulerAngles.y, Time.deltaTime * AxleRotationSpeed); 
-
+                float EulerYTarget = Mathf.MoveTowardsAngle(
+                    RotationPoint.rotation.eulerAngles.y,
+                    targetRotation.eulerAngles.y,
+                    Plugin.LRADRotationSpeed.Value * Time.deltaTime
+                );
                 RotationPoint.rotation = Quaternion.Euler(0f, EulerYTarget, 0f);
             }
         }

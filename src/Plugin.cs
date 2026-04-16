@@ -343,7 +343,8 @@ namespace DeviousTraps
         public static ConfigEntry<int> SawAmmo; //
         public static ConfigEntry<float> SawReloadTime; //
         public static ConfigEntry<float> SawLaunchSpeed; //
-        public static ConfigEntry<float> SawVolume; 
+        public static ConfigEntry<float> SawVolume;
+        public static ConfigEntry<float> SawRotationSpeed;
 
         public static ConfigEntry<float> FlameSpawnrate; //
         public static ConfigEntry<float> FlameDmgMult; //
@@ -367,6 +368,7 @@ namespace DeviousTraps
         public static ConfigEntry<float> LRADVolume; 
         public static ConfigEntry<float> LRADFXVolume;
         public static ConfigEntry<float> LRADProjectileSpeed;
+        public static ConfigEntry<float> LRADRotationSpeed;
 
         public static ConfigEntry<float> MouseTrapSpawnrate;
         public static ConfigEntry<float> BigMTrapChance;
@@ -393,6 +395,7 @@ namespace DeviousTraps
             SawFirerate = Config.Bind("Saw Turret", "Time Between Shots", 1.45f, "Length of time between each saw after windup. (default 1.45)");
             SawLaunchSpeed = Config.Bind("Saw Turret", "Projectile Speed", 3000f, "How fast are the saws launched from the saw turret? Note that the faster a saw travels, the more damage it will deal. Assume you are applying a force in Newtons (N) to the object. (default 3000)");
             SawVolume = Config.Bind("Saw Turret", "Volume", 0.6f, "How loud are all sounds from this turret? (default 0.6)");
+            SawRotationSpeed = Config.Bind("Saw Turret", "Rotation Speed", 1.8f, "How quickly does the Saw Turret rotate to face its target? The lower the value, the easier it is to outmaneuver. (default 1.8f)");
 
             FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.6f, "How often do these turrets spawn? (default 1.6)");
             FlameDmgMult = Config.Bind("Flame Turret", "Dmg Multiplier", 2.56f, "Damage Multiplier for flame turrets. You can make them heal with negative values too. (default 2.56)");
@@ -416,6 +419,7 @@ namespace DeviousTraps
             LRADFXMult = Config.Bind("Sound Turret", "FX Intensity", 0.8f, "Opacity multiplier to the noise and glitch visual FX when hit by the cannon. Higher values are equivalent to total blindness (default 0.8)");
             LRADVolume = Config.Bind("Sound Turret", "Turret Volume", 1f, "How loud are all sounds from this turret? (default 1)");
             LRADFXVolume = Config.Bind("Sound Turret", "FX Volume", 1f, "How loud are all sounds from the Disorientation/Impact effect? (default 1)");
+            LRADRotationSpeed = Config.Bind("Sound Turret", "Rotation Speed", 1f, "How quickly does the LRAD rotate to face its target? The lower the value, the easier it is to outmaneuver. (default 1)");
 
             MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn? Note that this is for 3 separate groups of mousetraps, not just one. (default 1.6)");
             BigMTrapChance = Config.Bind("Mouse Trap", "Big Mouse Trap Chance", 12f, "Percent chance for a mouse trap to spawn as a large one. (default 12%)");
@@ -569,6 +573,13 @@ namespace DeviousTraps
                 Max = 100000000,
             });
 
+            var SawRotationSpeedEntry = new FloatInputFieldConfigItem(SawRotationSpeed, new FloatInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = 0,
+                Max = 100,
+            });
+
             LethalConfigManager.AddConfigItem(SawSpawnrateEntry);
             LethalConfigManager.AddConfigItem(SawDmgMultEntry);
             LethalConfigManager.AddConfigItem(SawTargetRangeEntry);
@@ -577,6 +588,7 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(SawAmmoEntry);
             LethalConfigManager.AddConfigItem(SawReloadTimeEntry);
             LethalConfigManager.AddConfigItem(SawLaunchSpeedEntry);
+            LethalConfigManager.AddConfigItem(SawRotationSpeedEntry);
             LethalConfigManager.AddConfigItem(SawVolumeEntry);
 
             var LRADSpawnrateEntry = new FloatInputFieldConfigItem(LRADSpawnrate, new FloatInputFieldOptions
@@ -663,6 +675,13 @@ namespace DeviousTraps
                 Max = 2f,
             });
 
+            var LRADRotationSpeedEntry = new FloatInputFieldConfigItem(LRADRotationSpeed, new FloatInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = 0f,
+                Max = 100f,
+            });
+
             LethalConfigManager.AddConfigItem(LRADSpawnrateEntry);
             LethalConfigManager.AddConfigItem(LRADTargetRangeEntry);
             LethalConfigManager.AddConfigItem(LRADDmgMultEntry);
@@ -673,9 +692,9 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(LRADDizzyMultEntry);
             LethalConfigManager.AddConfigItem(LRADDrunknessMultEntry);
             LethalConfigManager.AddConfigItem(LRADFXMultEntry);
+            LethalConfigManager.AddConfigItem(LRADRotationSpeedEntry);
             LethalConfigManager.AddConfigItem(LRADVolumeEntry);
             LethalConfigManager.AddConfigItem(LRADFXVolumeEntry);
-
 
 
             var MouseTrapSpawnrateEntry = new FloatInputFieldConfigItem(MouseTrapSpawnrate, new FloatInputFieldOptions
