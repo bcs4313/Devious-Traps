@@ -1,4 +1,4 @@
-# Plugin# Devious Traps
+# Devious Traps
 
 A mod that adds 4 new traps that will brutalize you and your friends!
 
