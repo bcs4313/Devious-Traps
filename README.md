@@ -174,4 +174,10 @@ and more!
 * Added the ability to tweak how hard it is to get the bait from a giant mouse trap.
 * Made the default hitbox for Giant Mouse Trap items less forgiving.
 
+1.4.7
+* Saw turrets and sound turrets no longer snap to a target player's position.
+* Instead, they rotate at a fixed speed to find an opponent.
+* Rotation speeds for these turrets are adjustable in lethalconfig.
+
+
 </details>
