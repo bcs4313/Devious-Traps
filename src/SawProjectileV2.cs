@@ -171,6 +171,8 @@ namespace DeviousTraps.src
             }
         }
 
+        // the higher this multiplier is, the easier it is to push around saws.
+        public static float sawPushMultiplier = 1;
         public void OnTriggerEnter(Collider other)
         {
             //Debug.Log("Saw hit: " + other.gameObject);
@@ -201,6 +203,12 @@ namespace DeviousTraps.src
                     {
                         // do nothing
                     }
+
+                    // deflect blade away from player on contact
+                    Vector3 pushDir = (transform.position - ply.transform.position).normalized;
+                    RigidBody.AddForce(pushDir * sawPushMultiplier, ForceMode.Impulse);
+                    LastHitPlayerCooldown = HitCooldownReset;
+                    LastHitPlayer = ply;
 
                     LastHitPlayerCooldown = HitCooldownReset;
                     LastHitPlayer = ply;
