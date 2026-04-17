@@ -228,109 +228,6 @@ namespace DeviousTraps
                     Debug.LogError("Devious Traps: Mouse Trap clear error: " + e.ToString() + " this is only an issue if you have mouse traps attached to you and you can't remove them. Otherwise this is OK.");
                 }
             };
-
-            /*
-
-            // explosions affect mouse traps
-            On.Landmine.SpawnExplosion +=
-            (On.Landmine.orig_SpawnExplosion orig,
-             Vector3 explosionPosition,
-             bool spawnExplosionEffect,
-             float killRange,
-             float damageRange,
-             int nonLethalDamage,
-             float physicsForce,
-             GameObject overridePrefab,
-             bool goThroughCar) =>
-            {
-                orig.Invoke(explosionPosition,
-                            spawnExplosionEffect,
-                            killRange,
-                            damageRange,
-                            nonLethalDamage,
-                            physicsForce,
-                            overridePrefab,
-                            goThroughCar);
-
-                if (!RoundManager.Instance.IsServer) return;
-
-                try
-                {
-                    var traps = UnityEngine.Object.FindObjectsOfType<MouseTrap>();
-
-                    foreach (var trap in traps)
-                    {
-                        Rigidbody rb = trap.GetComponent<Rigidbody>();
-                        if (!rb) continue;
-
-                        // direction from explosion → trap
-                        Vector3 dir =
-                            (trap.transform.position - explosionPosition);
-
-                        float dist = dir.magnitude;
-
-                        // optional: falloff by distance
-                        float falloff = Math.Min(1, 1f / (1 + dist * MouseTrap.DistFalloff));
-
-                        Vector3 force =
-                            dir * falloff * MouseTrap.FlashForceSensitivity;
-
-                        force.y += 10 * MouseTrap.FlashForceSensitivity * MouseTrap.UpTendency;
-
-                        Debug.Log("Applying force: " + force);
-
-                        rb.AddForce(force, ForceMode.Impulse);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(e);
-                }
-            };
-
-
-            // stun grenade affects mouse traps
-            On.StunGrenadeItem.StunExplosion +=
-                (On.StunGrenadeItem.orig_StunExplosion orig, Vector3 explosionPosition, bool affectAudio, float flashSeverityMultiplier, float enemyStunTime, float flashSeverityDistanceRolloff, bool isHeldItem, PlayerControllerB playerHeldBy, PlayerControllerB playerThrownBy, float addToFlashSeverity) =>
-                {
-                    orig.Invoke(explosionPosition, affectAudio, flashSeverityMultiplier, enemyStunTime, flashSeverityMultiplier, isHeldItem, playerHeldBy, playerThrownBy, addToFlashSeverity);
-
-                    if (!RoundManager.Instance.IsServer) { return; }
-
-                    try
-                    {
-                        var traps = UnityEngine.Object.FindObjectsOfType<MouseTrap>();
-
-                        foreach (var trap in traps)
-                        {
-                            Rigidbody rb = trap.GetComponent<Rigidbody>();
-                            if (!rb) continue;
-
-                            // direction from explosion → trap
-                            Vector3 dir =
-                                (trap.transform.position - explosionPosition);
-
-                            float dist = dir.magnitude;
-
-                            // optional: falloff by distance
-                            float falloff = Math.Min(1, 1f / (1 + dist * MouseTrap.DistFalloff));
-
-                            Vector3 force =
-                                dir * falloff * MouseTrap.LandmineForceSensitivity;
-
-                            Debug.Log("Applying force: " + force);
-
-                            force.y += 10 * MouseTrap.LandmineForceSensitivity * MouseTrap.UpTendency;
-
-                            rb.AddForce(force, ForceMode.Impulse);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e);
-                    }
-                };
-            */
         }
 
         // SETTINGS SECTION
@@ -421,7 +318,7 @@ namespace DeviousTraps
             LRADFXVolume = Config.Bind("Sound Turret", "FX Volume", 1f, "How loud are all sounds from the Disorientation/Impact effect? (default 1)");
             LRADRotationSpeed = Config.Bind("Sound Turret", "Rotation Speed", 60f, "How quickly does the LRAD rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 1)");
 
-            MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn? Note that this is for 3 separate groups of mousetraps, not just one. (default 1.6)");
+            MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn? Note that this is for 3 separate groups of mousetraps, not just one. (default 0.8)");
             BigMTrapChance = Config.Bind("Mouse Trap", "Big Mouse Trap Chance", 12f, "Percent chance for a mouse trap to spawn as a large one. (default 12%)");
             GiantMTrapChance = Config.Bind("Mouse Trap", "Giant Mouse Trap Chance", 8f, "Percent chance for a mouse trap to be giant. Giant traps have scrap as bait. You have to be really careful when stealing the bait! (default 8%)");
             SmallMTrapDmg = Config.Bind("Mouse Trap", "Small Mouse Trap Damage", 12, "Damage Amount for small traps. You can make them heal with negative values too. (default 12)");

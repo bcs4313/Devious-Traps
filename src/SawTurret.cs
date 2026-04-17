@@ -335,8 +335,10 @@ namespace DeviousTraps.src
         //public static float SawLaunchForce = 3000f; default
         public void Fire()
         {
-            // direction fired simply is the rotation of the turret itself
-            Vector3 dir = transform.forward;
+            // direction fired is toward player if within cone, otherwise turret orientation
+            Vector3 toPlayer = (TargetPlayer.transform.position - SawSpawnPoint.position).normalized;
+            float angle = Vector3.Angle(transform.forward, toPlayer);
+            Vector3 dir = angle <= 30f ? toPlayer : transform.forward;
 
             // Spawn with rotation matching the direction
             Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
@@ -346,7 +348,6 @@ namespace DeviousTraps.src
             //   +90 X  -> mesh was Y-forward
             //   +90 Y  -> mesh was X-forward
             Quaternion axisFix = Quaternion.Euler(0f, ycorrect, zcorrect);
-
             Quaternion finalRot = rot * axisFix;
 
             GameObject blade = Instantiate(
@@ -357,13 +358,10 @@ namespace DeviousTraps.src
 
             // Apply launch force (server-side)
             blade.GetComponent<SawProjectileV2>().LaunchForce = dir * Plugin.SawLaunchSpeed.Value;
-
             // Scale based on turret scale
             blade.GetComponent<SawProjectileV2>().SetScale(transform.localScale.y);
-
             // Spawn over network
             blade.GetComponent<NetworkObject>().Spawn();
-
             PlayLaunchSoundClientRpc();
             CurrentAmmo -= 1;
         }
