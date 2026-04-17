@@ -179,5 +179,9 @@ and more!
 * Instead, they rotate at a fixed speed to find an opponent.
 * Rotation speeds for these turrets are adjustable in lethalconfig.
 
+1.4.8
+* Saw turrets aim directly at the player if the player is within a 30 degree cone instead of missing (bugfix from 1.4.7)
+* Saw blades are less likely to get stuck in walls than before.
+* Saw blades are easier to push around.
 
 </details>
