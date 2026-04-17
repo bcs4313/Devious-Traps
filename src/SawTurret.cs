@@ -395,15 +395,15 @@ namespace DeviousTraps.src
         public void facePosition(Vector3 pos)
         {
             Vector3 directionToTarget = pos - transform.position;
-            directionToTarget.y = 0f;
+            directionToTarget.y = 0f; // Ignore vertical difference
             if (directionToTarget != Vector3.zero)
             {
+                // use Lerp angle adjustment to achieve target rotation
                 Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
-                float EulerYTarget = Mathf.MoveTowardsAngle(
-                    transform.rotation.eulerAngles.y,
-                    targetRotation.eulerAngles.y,
-                    Plugin.SawRotationSpeed.Value * Time.deltaTime
-                );
+
+                // rotate at a specific speed, using DeltaTime to prevent fps specific speed differences 
+                float EulerYTarget = Mathf.MoveTowardsAngle(transform.rotation.eulerAngles.y, targetRotation.eulerAngles.y, Time.deltaTime * Plugin.SawRotationSpeed.Value);
+
                 transform.rotation = Quaternion.Euler(0f, EulerYTarget, 0f);
             }
         }
