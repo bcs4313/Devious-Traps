@@ -116,7 +116,7 @@ namespace DeviousTraps.src
                 PlayerControllerB player = scripts[i];
                 if (player.NetworkObjectId == nid)
                 {
-                    player.DamagePlayer(20);
+                    player.DamagePlayer(Plugin.PlasmaDamage.Value);
                 }
             }
         }

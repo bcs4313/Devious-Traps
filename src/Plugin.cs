@@ -307,6 +307,7 @@ namespace DeviousTraps
         public static ConfigEntry<String> MTrapWhitelist;
 
         public static ConfigEntry<float> PlasmaSpawnrate;
+        public static ConfigEntry<int> PlasmaDamage;
         public static ConfigEntry<float> PlasmaReloadTime;
         public static ConfigEntry<float> PlasmaWindupTime;
         public static ConfigEntry<float> PlasmaTargetRange;
@@ -371,16 +372,17 @@ namespace DeviousTraps
             MTrapScrapBaitForgiveness = Config.Bind("Mouse Trap", "Mouse Trap Bait Forgiveness", 0.65f, "Alters the size of the hitbox that makes the giant mouse trap bait grabbable by players. The lower the value, the harder it is to get the item. 0.63 = insane, 0.65 = hard, 0.8 = forgiving, 1 = very forgiving (default 0.65)");
 
             PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
-            PlasmaWindupTime = Config.Bind("Plasma Turret", "Windup Time", 1.45f, "How long a plasma turret takes before it starts firing projectiles at you (in seconds). (default 1.45)");
-            PlasmaReloadTime = Config.Bind("Plasma Turret", "Reload Time", 7f, "How long it takes for a plasma turret to reload (in seconds). (default 7)");
+            PlasmaDamage = Config.Bind("Plasma Turret", "Dmg Multiplier", 1, "Damage Multiplier for plasma projectiles. You can make them heal with negative values too. A multiplier of 1 deals 20 damage on contact. (default 1)");
+            PlasmaWindupTime = Config.Bind("Plasma Turret", "Windup Time", 1.3f, "How long a plasma turret takes before it starts firing projectiles at you (in seconds). (default 1.3)");
+            PlasmaReloadTime = Config.Bind("Plasma Turret", "Reload Time", 12f, "How long it takes for a plasma turret to reload (in seconds). (default 12)");
             PlasmaTargetRange = Config.Bind("Plasma Turret", "Range", 25f, "How far away a plasma turret can see you. They can't see through walls though. (default 25)");
-            PlasmaBallsPerBurst = Config.Bind("Plasma Turret", "Burst Quantity", 3, "How many plasma balls are fired per burst?");
-            PlasmaBurstQuantity = Config.Bind("Plasma Turret", "Bursts per reload", 3, "How many bursts are fired before reloading?");
+            PlasmaBallsPerBurst = Config.Bind("Plasma Turret", "Burst Quantity", 3, "How many plasma balls are fired per burst? (default 3)");
+            PlasmaBurstQuantity = Config.Bind("Plasma Turret", "Bursts per reload", 2, "How many bursts are fired before reloading? (default 2)");
             PlasmaProjDelay = Config.Bind("Plasma Turret", "Delay per projectile", 0.3f, "What is the delay between each plasma ball in a burst (in seconds)? (default 0.3)");
             PlasmaBurstDelay = Config.Bind("Plasma Turret", "Delay per Burst", 1.3f, "What is the delay between each burst of plasma (in seconds)? (default 1.3)");
-            PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 14f, "How fast are the plasma balls launched from this turret? Assume you are setting a speed in meters per second. (default 14)");
+            PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 18f, "How fast are the plasma balls launched from this turret? Assume you are setting a speed in meters per second. (default 18)");
             PlasmaTurretVolume = Config.Bind("Plasma Turret", "Turret Volume", 0.65f, "How loud are all sounds from this turret and its projectiles? (default 0.65)");
-            PlasmaBallLifetime = Config.Bind("Plasma Turret", "Plasma Ball Lifetime", 4f, "Lifetime of a plasma ball (in seconds). (default 4). Plasma balls are very bouncy, so higher values will give them more bounces and cause more chaos.");
+            PlasmaBallLifetime = Config.Bind("Plasma Turret", "Plasma Ball Lifetime", 5f, "Lifetime of a plasma ball (in seconds). Plasma balls are very bouncy, so higher values will give them more bounces and cause more chaos. (default 5)");
             PlasmaRotationSpeed = Config.Bind("Plasma Turret", "Rotation Speed", 67f, "How quickly does the Plasma Turret rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 67)");
 
             var FlameSpawnrateEntry = new FloatInputFieldConfigItem(FlameSpawnrate, new FloatInputFieldOptions
@@ -731,6 +733,14 @@ namespace DeviousTraps
                 Max = 100000000,
             });
 
+            var PlasmaDamageEntry = new IntInputFieldConfigItem(PlasmaDamage, new IntInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = -1000,
+                Max = 1000,
+            });
+
+
             var PlasmaWindupTimeEntry = new FloatInputFieldConfigItem(PlasmaWindupTime, new FloatInputFieldOptions
             {
                 RequiresRestart = false,
@@ -808,8 +818,9 @@ namespace DeviousTraps
                 Min = 0,
                 Max = 10000,
             });
-
+            
             LethalConfigManager.AddConfigItem(PlasmaSpawnrateEntry);
+            LethalConfigManager.AddConfigItem(PlasmaDamageEntry);
             LethalConfigManager.AddConfigItem(PlasmaTargetRangeEntry);
             LethalConfigManager.AddConfigItem(PlasmaWindupTimeEntry);
             LethalConfigManager.AddConfigItem(PlasmaReloadTimeEntry);
