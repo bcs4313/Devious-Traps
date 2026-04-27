@@ -28,6 +28,7 @@ namespace DeviousTraps.src
         private float TimeUntilDoneReloading = 0;
         private float TimeUntilBurstReady = 0;
         private int CurrentAmmo = 0;
+        private int CurrentBursts = 0;
 
         internal Animator animator;
 
@@ -192,15 +193,22 @@ namespace DeviousTraps.src
                 {
                     Reloading = false;
                     PlayFinishReloadingClientRpc();
-                    CurrentAmmo = Plugin.PlasmaBurstQuantity.Value;
+                    CurrentAmmo = Plugin.PlasmaBallsPerBurst.Value;
+                    CurrentBursts = Plugin.PlasmaBurstQuantity.Value;
                 }
                 else if (Reloading == false)
                 {
-                    if (CurrentAmmo <= 0)
+                    if (CurrentAmmo <= 0 && CurrentBursts <= 0)
                     {
                         Reloading = true;
                         TimeUntilDoneReloading = Plugin.PlasmaReloadTime.Value;
                         PlayReloadingClientRpc();
+                    }
+                    else if(CurrentAmmo <= 0)
+                    {
+                        BurstCooldownTime = Plugin.PlasmaBurstDelay.Value;
+                        CurrentAmmo = Plugin.PlasmaBallsPerBurst.Value;
+                        CurrentBursts -= 1;
                     }
                 }
             }
@@ -225,6 +233,7 @@ namespace DeviousTraps.src
             TimeUntilDoneReloading -= Time.deltaTime;
             WindTime += Time.deltaTime;
             CooldownTime -= Time.deltaTime;
+            BurstCooldownTime -= Time.deltaTime;
             TimeUntilEnabled -= Time.deltaTime;
         }
 
@@ -326,15 +335,20 @@ namespace DeviousTraps.src
         // point and fire variables
         float WindTime = 0f;
         float CooldownTime = 0f;
+        float BurstCooldownTime = 0f;
         public void AITick()
         {
             facePosition(TargetPlayer.transform.position);
 
             if(!RoundManager.Instance.IsHost) { return; }
-            if(WindTime > Plugin.PlasmaWindupTime.Value && CooldownTime < 0f)
+
+            if (BurstCooldownTime < 0f)
             {
-                CooldownTime = Plugin.PlasmaProjDelay.Value;
-                Fire();
+                if (WindTime > Plugin.PlasmaWindupTime.Value && CooldownTime < 0f)
+                {
+                    CooldownTime = Plugin.PlasmaProjDelay.Value;
+                    Fire();
+                }
             }
         }
 
@@ -418,7 +432,7 @@ namespace DeviousTraps.src
             Vector3 currentEuler = transform.rotation.eulerAngles;
             Vector3 targetEuler = targetRotation.eulerAngles;
 
-            float speed = Time.deltaTime * Plugin.PlasmaRotationSpeedEntry.Value;
+            float speed = Time.deltaTime * Plugin.PlasmaRotationSpeed.Value;
 
             // X = pitch (vertical aim), Y = yaw (horizontal aim)
             // Use MoveTowardsAngle so wrap-around at 360 is handled correctly.
