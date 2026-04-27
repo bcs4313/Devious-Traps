@@ -194,7 +194,7 @@ namespace DeviousTraps.src
                     Reloading = false;
                     PlayFinishReloadingClientRpc();
                     CurrentAmmo = Plugin.PlasmaBallsPerBurst.Value;
-                    CurrentBursts = Plugin.PlasmaBurstQuantity.Value;
+                    CurrentBursts = Plugin.PlasmaBurstQuantity.Value-1;
                 }
                 else if (Reloading == false)
                 {

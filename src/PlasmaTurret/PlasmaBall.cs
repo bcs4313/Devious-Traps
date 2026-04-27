@@ -60,7 +60,7 @@ namespace DeviousTraps.src
                 return;
             }
 
-            if (explosionTime != -1 && (Time.time - explosionTime > 3) || (Time.time - creationTime > 30))
+            if (explosionTime != -1 && (Time.time - explosionTime > 3) || (Time.time - creationTime > Plugin.PlasmaBallLifetime.Value))
             {
                 for (int i = 0; i < explosions.Count; i++)
                 {
