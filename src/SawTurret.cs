@@ -35,11 +35,11 @@ namespace DeviousTraps.src
             ActivationGroup.SetActive(false);
             VisibleSawBlade.SetActive(true);
             animator = GetComponent<Animator>();
-            AudioSawTurretOn.volume = Plugin.SawVolume.Value;
-            AudioLaunchSaw.volume = Plugin.SawVolume.Value;
-            AudioReload.volume = Plugin.SawVolume.Value;
-            AudioDoneReloading.volume = Plugin.SawVolume.Value;
-            AudioPowerDown.volume = Plugin.SawVolume.Value;
+            AudioSawTurretOn.volume = Plugin.SawVolume.Value / 1.35f;
+            AudioLaunchSaw.volume = Plugin.SawVolume.Value / 1.35f;
+            AudioReload.volume = Plugin.SawVolume.Value / 1.35f;
+            AudioDoneReloading.volume = Plugin.SawVolume.Value / 1.35f;
+            AudioPowerDown.volume = Plugin.SawVolume.Value / 1.2f;
             if (RoundManager.Instance.IsHost)
             {
                 PositionShiftForFiring();

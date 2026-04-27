@@ -18,8 +18,6 @@ namespace DeviousTraps.src
         public float moveDelay;             //The amount of seconds to wait to move
         public GameObject explosionEffect;  //The effect to play when the ball collides
 
-        private bool canMove = false;       //The move status of the Ball;
-        private Animator anim;
         private List<ParticleSystem> ballPS;
         private List<ParticleSystem> trailPS;
         float creationTime = -1;
@@ -31,13 +29,11 @@ namespace DeviousTraps.src
         void Start()
         {
             GetRequiredComponents();
-            SetParticleColors();
+            //SetParticleColors();
 
-            //Updates the Animation Multiplier to fit the movement speed
-            if (anim != null) anim.SetFloat("speedMultiplier", speed);
             Invoke("MovementStatus", moveDelay);
 
-            laserHit.volume = Plugin.PlasmaTurretVolume.Value;
+            laserHit.volume = Plugin.PlasmaTurretVolume.Value / 1.4f;
 
             creationTime = Time.time;
             explosions = new List<GameObject>();
@@ -128,7 +124,6 @@ namespace DeviousTraps.src
         [ClientRpc]
         void spawnExplosionClientRpc()
         {
-            canMove = false;
             explosionTime = Time.time;
             GameObject go = Instantiate(explosionEffect) as GameObject;
             go.transform.position = transform.position;
@@ -189,7 +184,6 @@ namespace DeviousTraps.src
 
             //Save all the Particle System components references inside the array
             ParticleSystem[] ps = GetComponentsInChildren<ParticleSystem>();
-            anim = GetComponentInChildren<Animator>();
 
             //Custom error to alert the user
             if (ps == null)
@@ -208,6 +202,7 @@ namespace DeviousTraps.src
             }
         }
 
+        /*
         //Set the same particle Color Over Lifetime (Gradient) to every child Particle System.
         void SetParticleColors()
         {
@@ -222,12 +217,9 @@ namespace DeviousTraps.src
                 psColorOverTime.color = new ParticleSystem.MinMaxGradient(trailColor);
             }
         }
+        */
 
-        //Allows the movement on the FixedUpdate
-        void MovementStatus()
-        {
-            canMove = true;
-        }
+
 
 #if UNITY_EDITOR
 	[Header("Debug: ")]

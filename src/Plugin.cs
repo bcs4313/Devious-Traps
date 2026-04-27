@@ -362,7 +362,7 @@ namespace DeviousTraps
             MTrapScrapBaitForgiveness = Config.Bind("Mouse Trap", "Mouse Trap Bait Forgiveness", 0.65f, "Alters the size of the hitbox that makes the giant mouse trap bait grabbable by players. The lower the value, the harder it is to get the item. 0.63 = insane, 0.65 = hard, 0.8 = forgiving, 1 = very forgiving (default 0.65)");
 
             PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
-            PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 3000f, "How fast are the plasma balls launched from this turret? Assume you are applying a force in Newtons (N) to the object. (default 3000)");
+            PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 7f, "How fast are the plasma balls launched from this turret? Assume you are applying a force in Newtons (N) to the object. (default 3000)");
             PlasmaTurretVolume = Config.Bind("Plasma Turret", "Turret Volume", 0.65f, "How loud are all sounds from this turret and its projectiles? (default 0.65)");
 
 

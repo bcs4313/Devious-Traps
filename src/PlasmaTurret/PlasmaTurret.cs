@@ -354,8 +354,8 @@ namespace DeviousTraps.src
             // Common cases:
             //   +90 X  -> mesh was Y-forward
             //   +90 Y  -> mesh was X-forward
-            Quaternion axisFix = Quaternion.Euler(0f, ycorrect, zcorrect);
-            Quaternion finalRot = rot * axisFix;
+            //Quaternion axisFix = Quaternion.Euler(0f, ycorrect, zcorrect);
+            Quaternion finalRot = rot;
 
             GameObject plasmaBall = Instantiate(
                 Plugin.PlasmaBallPrefab,
@@ -366,7 +366,7 @@ namespace DeviousTraps.src
             var comp = plasmaBall.GetComponent<PlasmaBall>();
 
             // Apply launch force (server-side)
-            comp.GetComponent<Rigidbody>().AddForce(dir * Plugin.PlasmaProjectileSpeed.Value);
+            comp.speed = Plugin.PlasmaProjectileSpeed.Value;
 
             // Scale based on turret scale
             comp.SetScale(transform.localScale.y);
@@ -376,6 +376,8 @@ namespace DeviousTraps.src
             PlayLaunchSoundClientRpc();
             CurrentAmmo -= 1;
         }
+
+
 
         [ClientRpc]
         public void PlayLaunchSoundClientRpc()
@@ -407,17 +409,24 @@ namespace DeviousTraps.src
         public void facePosition(Vector3 pos)
         {
             Vector3 directionToTarget = pos - transform.position;
-            directionToTarget.y = 0f; // Ignore vertical difference
-            if (directionToTarget != Vector3.zero)
-            {
-                // use Lerp angle adjustment to achieve target rotation
-                Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+            if (directionToTarget == Vector3.zero) return;
 
-                // rotate at a specific speed, using DeltaTime to prevent fps specific speed differences 
-                float EulerYTarget = Mathf.MoveTowardsAngle(transform.rotation.eulerAngles.y, targetRotation.eulerAngles.y, Time.deltaTime * Plugin.SawRotationSpeed.Value);
+            // Desired rotation that points directly at the target on all axes
+            Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
 
-                transform.rotation = Quaternion.Euler(0f, EulerYTarget, 0f);
-            }
+            Vector3 currentEuler = transform.rotation.eulerAngles;
+            Vector3 targetEuler = targetRotation.eulerAngles;
+
+            float speed = Time.deltaTime * Plugin.SawRotationSpeed.Value;
+
+            // X = pitch (vertical aim), Y = yaw (horizontal aim)
+            // Use MoveTowardsAngle so wrap-around at 360 is handled correctly.
+            float pitch = Mathf.MoveTowardsAngle(currentEuler.x, targetEuler.x, speed);
+            float yaw = Mathf.MoveTowardsAngle(currentEuler.y, targetEuler.y, speed);
+
+            // Keep roll (Z) at 0 so the turret doesn't tilt sideways.
+            transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         }
+
     }
 }
