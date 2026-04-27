@@ -11,7 +11,10 @@ namespace DeviousTraps.src
 {
     internal class PlasmaTurret : NetworkBehaviour
     {
+        public AudioSource AudioPlasmaTurretOnClicking;
         public AudioSource AudioPlasmaTurretOn;
+        public AudioSource AudioPlasmaQuickCharge;
+        public AudioSource AudioPlasmaOnSwitch;
         public AudioSource AudioFireBall;
         public AudioSource AudioPowerDown;
         public GameObject ActivationGroup;
@@ -38,6 +41,8 @@ namespace DeviousTraps.src
             AudioReload.volume = Plugin.PlasmaTurretVolume.Value;
             AudioDoneReloading.volume = Plugin.PlasmaTurretVolume.Value;
             AudioPowerDown.volume = Plugin.PlasmaTurretVolume.Value;
+            
+            /**
             if (RoundManager.Instance.IsHost)
             {
                 try
@@ -46,6 +51,7 @@ namespace DeviousTraps.src
                 }
                 catch (Exception e) { Debug.LogError(e); }
             }
+            **/
         }
 
         float WindUpVolumeMultiplier = 0f;
@@ -383,12 +389,15 @@ namespace DeviousTraps.src
             if(on)
             {
                 AudioPlasmaTurretOn.Play();
+                AudioPlasmaOnSwitch.Play();
+                AudioPlasmaTurretOnClicking.Play();
                 ActivationGroup.SetActive(true);
                 animator.Play("On");
             }
             else
             {
                 AudioPlasmaTurretOn.Stop();
+                AudioPlasmaTurretOnClicking.Stop();
                 ActivationGroup.SetActive(false);
                 animator.Play("Off");
             }

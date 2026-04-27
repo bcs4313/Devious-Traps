@@ -179,6 +179,21 @@ namespace DeviousTraps
                 return curve;
             });
 
+            // register phase 
+            // supply a lambda later for mapping the trap to various selectable levels...
+            LethalLib.Modules.MapObjects.RegisterMapObject(PlasmaTurretDef, LevelTypes.All, (SelectableLevel _) =>
+            {
+                var minTurrets = 0;
+                var maxTurrets = 4.8 * Plugin.PlasmaSpawnrate.Value;
+                AnimationCurve curve = new AnimationCurve(new Keyframe[]
+{
+                    new Keyframe(0f, (float)minTurrets, 0.267f, 0.267f, 0f, 0.246f),  // min turret reff from missile turret = 0
+                    new Keyframe(1f, (float)maxTurrets, 61f, 61f, 0.015f * (float)maxTurrets, 0f)  // max turret ref from missile turret = 6
+                });
+                return curve;
+            });
+
+
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(SawPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(SawTurretPrefab);
@@ -187,6 +202,8 @@ namespace DeviousTraps
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(LRADBlastPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(LRADImpactPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MouseTrapPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaTurretPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaBallPrefab);
             Hooks();
         }
 
@@ -289,12 +306,13 @@ namespace DeviousTraps
         public static ConfigEntry<bool> MTrapCanBeDisabled;
         public static ConfigEntry<String> MTrapWhitelist;
 
+        public static ConfigEntry<float> PlasmaSpawnrate;
         public static ConfigEntry<float> PlasmaProjectileSpeed;
         public static ConfigEntry<float> PlasmaTurretVolume;
 
         public void bindVars()
         {
-            SawSpawnrate = Config.Bind("Saw Turret", "Spawnrate", 1.6f, "How often do these turrets spawn? (default 1.6)");
+            SawSpawnrate = Config.Bind("Saw Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
             SawFirerate = Config.Bind("Saw Turret", "Time Between Shots", 1.45f, "Length of time between each saw after windup. (default 1.45)");
             SawDmgMult = Config.Bind("Saw Turret", "Dmg Multiplier", 1.8f, "Damage multiplier for saw blades. Dmg is also dependent on the velocity of a saw blade. You can make them heal with negative values too. (default 1.8)");
             SawTargetRange = Config.Bind("Saw Turret", "Range", 25f, "How far away a saw turret can see you. They can't see through walls though. (default 25)");
@@ -307,7 +325,7 @@ namespace DeviousTraps
             SawVolume = Config.Bind("Saw Turret", "Volume", 0.6f, "How loud are all sounds from this turret? (default 0.6)");
             SawRotationSpeed = Config.Bind("Saw Turret", "Rotation Speed", 100f, "How quickly does the Saw Turret rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 100)");
 
-            FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.6f, "How often do these turrets spawn? (default 1.6)");
+            FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
             FlameDmgMult = Config.Bind("Flame Turret", "Dmg Multiplier", 2.56f, "Damage Multiplier for flame turrets. You can make them heal with negative values too. (default 2.56)");
             FlameTargetRange = Config.Bind("Flame Turret", "Range", 7f, "How far away a flame turret can see you. They can't see through walls though. (default 7)");
             FlameRisingTime = Config.Bind("Flame Turret", "Rising Time", 1.4f, "Time in seconds it takes for a flame turret to rise up and fire at you. (default 1.4)");
@@ -343,6 +361,7 @@ namespace DeviousTraps
             MTrapWhitelist = Config.Bind("Mouse Trap", "Bait whitelist", "gift box, jar of pickles, gold bar, fancy lamp, golden cup, zed dog", "All scrap in this whitelist can be selected as bait for the giant trap. Enter the name that appears when you scan the scrap in-game. Comma separated list. (not case sensitive).");
             MTrapScrapBaitForgiveness = Config.Bind("Mouse Trap", "Mouse Trap Bait Forgiveness", 0.65f, "Alters the size of the hitbox that makes the giant mouse trap bait grabbable by players. The lower the value, the harder it is to get the item. 0.63 = insane, 0.65 = hard, 0.8 = forgiving, 1 = very forgiving (default 0.65)");
 
+            PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
             PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 3000f, "How fast are the plasma balls launched from this turret? Assume you are applying a force in Newtons (N) to the object. (default 3000)");
             PlasmaTurretVolume = Config.Bind("Plasma Turret", "Turret Volume", 0.65f, "How loud are all sounds from this turret and its projectiles? (default 0.65)");
 
@@ -687,6 +706,15 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(MTrapWhitelistEntry);
             LethalConfigManager.AddConfigItem(MTrapBaitEntry);
 
+
+            var PlasmaSpawnrateEntry = new FloatInputFieldConfigItem(PlasmaSpawnrate, new FloatInputFieldOptions
+            {
+                RequiresRestart = true,
+                Min = 0,
+                Max = 100000000,
+            });
+
+
             var PlasmaTurretVolumeEntry = new FloatInputFieldConfigItem(PlasmaTurretVolume, new FloatInputFieldOptions
             {
                 RequiresRestart = false,
@@ -701,7 +729,7 @@ namespace DeviousTraps
                 Max = 100000000,
             });
 
-
+            LethalConfigManager.AddConfigItem(PlasmaSpawnrateEntry);
             LethalConfigManager.AddConfigItem(PlasmaProjectileSpeedEntry);
             LethalConfigManager.AddConfigItem(PlasmaTurretVolumeEntry);
         }
