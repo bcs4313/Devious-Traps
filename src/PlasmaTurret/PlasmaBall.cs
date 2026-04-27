@@ -33,7 +33,7 @@ namespace DeviousTraps.src
 
             Invoke("MovementStatus", moveDelay);
 
-            laserHit.volume = Plugin.PlasmaTurretVolume.Value / 1.4f;
+            laserHit.volume = Plugin.PlasmaTurretVolume.Value / 2f;
 
             creationTime = Time.time;
             explosions = new List<GameObject>();

@@ -26,6 +26,7 @@ namespace DeviousTraps.src
         public AudioSource AudioReload;
         public AudioSource AudioDoneReloading;
         private float TimeUntilDoneReloading = 0;
+        private float TimeUntilBurstReady = 0;
         private int CurrentAmmo = 0;
 
         internal Animator animator;
@@ -158,7 +159,7 @@ namespace DeviousTraps.src
             // conditional for turning turret on and off
             if (RoundManager.Instance.IsHost) { OnOffConditional(); };
 
-            AudioPlasmaTurretOn.volume = Plugin.SawVolume.Value * WindUpVolumeMultiplier;
+            AudioPlasmaTurretOn.volume = Plugin.PlasmaTurretVolume.Value * WindUpVolumeMultiplier;
             if (On)
             {
                 if (RoundManager.Instance.IsHost && !AudioPlasmaTurretOn.isPlaying)
@@ -168,7 +169,7 @@ namespace DeviousTraps.src
 
                 if (WindUpVolumeMultiplier < 1)
                 {
-                    WindUpVolumeMultiplier += Plugin.SawWindupTime.Value * Time.deltaTime;
+                    WindUpVolumeMultiplier += Plugin.PlasmaWindupTime.Value * Time.deltaTime;
                 }
                 AITick();
             }
@@ -181,7 +182,7 @@ namespace DeviousTraps.src
 
                 if (WindUpVolumeMultiplier > 0.25f)
                 {
-                    WindUpVolumeMultiplier -= Plugin.SawWindupTime.Value * Time.deltaTime;
+                    WindUpVolumeMultiplier -= Plugin.PlasmaWindupTime.Value * Time.deltaTime;
                 }
             }
 
@@ -191,14 +192,14 @@ namespace DeviousTraps.src
                 {
                     Reloading = false;
                     PlayFinishReloadingClientRpc();
-                    CurrentAmmo = Plugin.SawAmmo.Value;
+                    CurrentAmmo = Plugin.PlasmaBurstQuantity.Value;
                 }
                 else if (Reloading == false)
                 {
                     if (CurrentAmmo <= 0)
                     {
                         Reloading = true;
-                        TimeUntilDoneReloading = Plugin.SawReloadTime.Value;
+                        TimeUntilDoneReloading = Plugin.PlasmaReloadTime.Value;
                         PlayReloadingClientRpc();
                     }
                 }
@@ -249,7 +250,7 @@ namespace DeviousTraps.src
 
         public void OnOffConditional()
         {
-            float closestDist = Plugin.SawTargetRange.Value;
+            float closestDist = Plugin.PlasmaTargetRange.Value;
             PlayerControllerB best = null;
 
             var players = RoundManager.Instance.playersManager.allPlayerScripts;
@@ -264,7 +265,7 @@ namespace DeviousTraps.src
                 Vector3 target = ply.gameplayCamera.transform.position;
 
                 float dist = Vector3.Distance(origin, target);
-                if (dist > Plugin.SawTargetRange.Value) continue;
+                if (dist > Plugin.PlasmaTargetRange.Value) continue;
 
                 bool blocked = Physics.Linecast(
                     origin,
@@ -330,16 +331,16 @@ namespace DeviousTraps.src
             facePosition(TargetPlayer.transform.position);
 
             if(!RoundManager.Instance.IsHost) { return; }
-            if(WindTime > Plugin.SawWindupTime.Value && CooldownTime < 0f)
+            if(WindTime > Plugin.PlasmaWindupTime.Value && CooldownTime < 0f)
             {
-                CooldownTime = Plugin.SawFirerate.Value;
+                CooldownTime = Plugin.PlasmaProjDelay.Value;
                 Fire();
             }
         }
 
         public static float ycorrect = 90f;
         public static float zcorrect = 90f;
-        //public static float SawLaunchForce = 3000f; default
+
         public void Fire()
         {
             // direction fired is toward player if within cone, otherwise turret orientation
@@ -417,7 +418,7 @@ namespace DeviousTraps.src
             Vector3 currentEuler = transform.rotation.eulerAngles;
             Vector3 targetEuler = targetRotation.eulerAngles;
 
-            float speed = Time.deltaTime * Plugin.SawRotationSpeed.Value;
+            float speed = Time.deltaTime * Plugin.PlasmaRotationSpeedEntry.Value;
 
             // X = pitch (vertical aim), Y = yaw (horizontal aim)
             // Use MoveTowardsAngle so wrap-around at 360 is handled correctly.
