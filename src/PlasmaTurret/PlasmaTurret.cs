@@ -11,16 +11,15 @@ namespace DeviousTraps.src
 {
     internal class PlasmaTurret : NetworkBehaviour
     {
-        public AudioSource AudioSawTurretOn;
-        public AudioSource AudioLaunchSaw;
+        public AudioSource AudioPlasmaTurretOn;
+        public AudioSource AudioFireBall;
         public AudioSource AudioPowerDown;
         public GameObject ActivationGroup;
         public PlayerControllerB TargetPlayer;
-        public Transform SawSpawnPoint;
+        public Transform PlasmaSpawnPoint;
 
         // Ammo Related
         bool Reloading = false;
-        public GameObject VisibleSawBlade;
         public AudioSource AudioReload;
         public AudioSource AudioDoneReloading;
         private float TimeUntilDoneReloading = 0;
@@ -33,23 +32,27 @@ namespace DeviousTraps.src
         public void Start()
         {
             ActivationGroup.SetActive(false);
-            VisibleSawBlade.SetActive(true);
             animator = GetComponent<Animator>();
-            AudioSawTurretOn.volume = Plugin.SawVolume.Value;
-            AudioLaunchSaw.volume = Plugin.SawVolume.Value;
-            AudioReload.volume = Plugin.SawVolume.Value;
-            AudioDoneReloading.volume = Plugin.SawVolume.Value;
-            AudioPowerDown.volume = Plugin.SawVolume.Value;
+            AudioPlasmaTurretOn.volume = Plugin.PlasmaTurretVolume.Value;
+            AudioFireBall.volume = Plugin.PlasmaTurretVolume.Value;
+            AudioReload.volume = Plugin.PlasmaTurretVolume.Value;
+            AudioDoneReloading.volume = Plugin.PlasmaTurretVolume.Value;
+            AudioPowerDown.volume = Plugin.PlasmaTurretVolume.Value;
             if (RoundManager.Instance.IsHost)
             {
-                PositionShiftForFiring();
+                try
+                {
+                    PositionShiftForFiring();
+                }
+                catch (Exception e) { Debug.LogError(e); }
             }
         }
 
         float WindUpVolumeMultiplier = 0f;
 
         public BoxCollider ShiftColliderArea; 
-        // Handles placing the saw turret so its much less likely to fire into a wall
+
+        // Handles placing the plasma turret so it may appear on the roof
         // if possible given the samples
         public void PositionShiftForFiring()
         {
@@ -147,12 +150,12 @@ namespace DeviousTraps.src
         public void Update()
         {
             // conditional for turning turret on and off
-            if (RoundManager.Instance.IsHost) { OnOffConditional();  };
+            if (RoundManager.Instance.IsHost) { OnOffConditional(); };
 
-            AudioSawTurretOn.volume = Plugin.SawVolume.Value * WindUpVolumeMultiplier;
+            AudioPlasmaTurretOn.volume = Plugin.SawVolume.Value * WindUpVolumeMultiplier;
             if (On)
             {
-                if (RoundManager.Instance.IsHost && !AudioSawTurretOn.isPlaying)
+                if (RoundManager.Instance.IsHost && !AudioPlasmaTurretOn.isPlaying)
                 {
                     ToggleTurretOnClientRpc(true);
                 }
@@ -165,7 +168,7 @@ namespace DeviousTraps.src
             }
             else
             {
-                if(RoundManager.Instance.IsHost && AudioSawTurretOn.isPlaying)
+                if(RoundManager.Instance.IsHost && AudioPlasmaTurretOn.isPlaying)
                 {
                     ToggleTurretOnClientRpc(false);
                 }
@@ -229,7 +232,6 @@ namespace DeviousTraps.src
         public void PlayReloadingClientRpc()
         {
             AudioReload.Play();
-            VisibleSawBlade.SetActive(false);
         }
 
         [ClientRpc]
@@ -237,7 +239,6 @@ namespace DeviousTraps.src
         {
             AudioDoneReloading.Play();
             AudioReload.Stop();
-            VisibleSawBlade.SetActive(true);
         }
 
         public void OnOffConditional()
@@ -336,7 +337,7 @@ namespace DeviousTraps.src
         public void Fire()
         {
             // direction fired is toward player if within cone, otherwise turret orientation
-            Vector3 toPlayer = (TargetPlayer.transform.position - SawSpawnPoint.position).normalized;
+            Vector3 toPlayer = (TargetPlayer.transform.position - PlasmaSpawnPoint.position).normalized;
             float angle = Vector3.Angle(transform.forward, toPlayer);
             Vector3 dir = angle <= 30f ? toPlayer : transform.forward;
 
@@ -350,18 +351,22 @@ namespace DeviousTraps.src
             Quaternion axisFix = Quaternion.Euler(0f, ycorrect, zcorrect);
             Quaternion finalRot = rot * axisFix;
 
-            GameObject blade = Instantiate(
-                Plugin.SawPrefab,
-                SawSpawnPoint.position,
+            GameObject plasmaBall = Instantiate(
+                Plugin.PlasmaBallPrefab,
+                PlasmaSpawnPoint.position,
                 finalRot
             );
 
+            var comp = plasmaBall.GetComponent<PlasmaBall>();
+
             // Apply launch force (server-side)
-            blade.GetComponent<SawProjectileV2>().LaunchForce = dir * Plugin.SawLaunchSpeed.Value;
+            comp.GetComponent<Rigidbody>().AddForce(dir * Plugin.PlasmaProjectileSpeed.Value);
+
             // Scale based on turret scale
-            blade.GetComponent<SawProjectileV2>().SetScale(transform.localScale.y);
+            comp.SetScale(transform.localScale.y);
+
             // Spawn over network
-            blade.GetComponent<NetworkObject>().Spawn();
+            comp.GetComponent<NetworkObject>().Spawn();
             PlayLaunchSoundClientRpc();
             CurrentAmmo -= 1;
         }
@@ -369,7 +374,7 @@ namespace DeviousTraps.src
         [ClientRpc]
         public void PlayLaunchSoundClientRpc()
         {
-            AudioLaunchSaw.Play();
+            AudioFireBall.Play();
         }
 
         [ClientRpc]
@@ -377,13 +382,13 @@ namespace DeviousTraps.src
         {
             if(on)
             {
-                AudioSawTurretOn.Play();
+                AudioPlasmaTurretOn.Play();
                 ActivationGroup.SetActive(true);
                 animator.Play("On");
             }
             else
             {
-                AudioSawTurretOn.Stop();
+                AudioPlasmaTurretOn.Stop();
                 ActivationGroup.SetActive(false);
                 animator.Play("Off");
             }

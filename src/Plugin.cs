@@ -26,7 +26,7 @@ namespace DeviousTraps
 {
     [BepInDependency(LethalLib.Plugin.ModGUID)]
     [BepInDependency("ainavt.lc.lethalconfig")]
-    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.4.1")]
+    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.4.8")]
     public class Plugin : BaseUnityPlugin
     {
         public static Harmony _harmony;
@@ -54,6 +54,12 @@ namespace DeviousTraps
         public static GameObject MouseTrapPrefab;
         public static GameObject MouseTrapSpawnerPrefab;
         public static SpawnableMapObjectDef MouseTrapDef;
+
+
+        // Plasma Turret Prefabs
+        public static GameObject PlasmaTurretPrefab;
+        public static GameObject PlasmaBallPrefab;
+        public static SpawnableMapObjectDef PlasmaTurretDef;
 
         public void LogIfDebugBuild(string text)
         {
@@ -100,6 +106,10 @@ namespace DeviousTraps
             MouseTrapPrefab = TrapBundle.LoadAsset<GameObject>("MouseTrap");
             MouseTrapDef = TrapBundle.LoadAsset<SpawnableMapObjectDef>("MouseTrapDef");
             MouseTrapSpawnerPrefab = TrapBundle.LoadAsset<GameObject>("MouseTrapSpawner");
+
+            PlasmaTurretPrefab = TrapBundle.LoadAsset<GameObject>("PlasmaTurret");
+            PlasmaTurretDef = TrapBundle.LoadAsset<SpawnableMapObjectDef>("PlasmaTurretDef");
+            PlasmaBallPrefab = TrapBundle.LoadAsset<GameObject>("PlasmaBall");
 
             //Debug.Log("Saw Turret Prefab: " + SawTurretPrefab);
             //Debug.Log("Saw Blade Prefab: " + SawPrefab);
@@ -279,6 +289,9 @@ namespace DeviousTraps
         public static ConfigEntry<bool> MTrapCanBeDisabled;
         public static ConfigEntry<String> MTrapWhitelist;
 
+        public static ConfigEntry<float> PlasmaProjectileSpeed;
+        public static ConfigEntry<float> PlasmaTurretVolume;
+
         public void bindVars()
         {
             SawSpawnrate = Config.Bind("Saw Turret", "Spawnrate", 1.6f, "How often do these turrets spawn? (default 1.6)");
@@ -329,6 +342,10 @@ namespace DeviousTraps
             MTrapCanBeDisabled = Config.Bind("Mouse Trap", "Traps can be disabled", true, "If all mouse traps can be disabled permanently by hitting them with a melee weapon. (default true)");
             MTrapWhitelist = Config.Bind("Mouse Trap", "Bait whitelist", "gift box, jar of pickles, gold bar, fancy lamp, golden cup, zed dog", "All scrap in this whitelist can be selected as bait for the giant trap. Enter the name that appears when you scan the scrap in-game. Comma separated list. (not case sensitive).");
             MTrapScrapBaitForgiveness = Config.Bind("Mouse Trap", "Mouse Trap Bait Forgiveness", 0.65f, "Alters the size of the hitbox that makes the giant mouse trap bait grabbable by players. The lower the value, the harder it is to get the item. 0.63 = insane, 0.65 = hard, 0.8 = forgiving, 1 = very forgiving (default 0.65)");
+
+            PlasmaProjectileSpeed = Config.Bind("Plasma Turret", "Projectile Launch Speed", 3000f, "How fast are the plasma balls launched from this turret? Assume you are applying a force in Newtons (N) to the object. (default 3000)");
+            PlasmaTurretVolume = Config.Bind("Plasma Turret", "Turret Volume", 0.65f, "How loud are all sounds from this turret and its projectiles? (default 0.65)");
+
 
             var FlameSpawnrateEntry = new FloatInputFieldConfigItem(FlameSpawnrate, new FloatInputFieldOptions
             {
@@ -669,6 +686,24 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(MTrapCanBeDisabledEntry);
             LethalConfigManager.AddConfigItem(MTrapWhitelistEntry);
             LethalConfigManager.AddConfigItem(MTrapBaitEntry);
+
+            var PlasmaTurretVolumeEntry = new FloatInputFieldConfigItem(PlasmaTurretVolume, new FloatInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = 0,
+                Max = 1,
+            });
+
+            var PlasmaProjectileSpeedEntry = new FloatInputFieldConfigItem(PlasmaProjectileSpeed, new FloatInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = 0,
+                Max = 100000000,
+            });
+
+
+            LethalConfigManager.AddConfigItem(PlasmaProjectileSpeedEntry);
+            LethalConfigManager.AddConfigItem(PlasmaTurretVolumeEntry);
         }
 
         public static void PopulateAssets()

@@ -37,7 +37,7 @@ namespace DeviousTraps.src
             if (anim != null) anim.SetFloat("speedMultiplier", speed);
             Invoke("MovementStatus", moveDelay);
 
-            laserHit.volume = Plugin.moaiGlobalMusicVol.Value;
+            laserHit.volume = Plugin.PlasmaTurretVolume.Value;
 
             creationTime = Time.time;
             explosions = new List<GameObject>();
@@ -49,6 +49,11 @@ namespace DeviousTraps.src
         #if UNITY_EDITOR   //This will run only in the Unity Editor (Won't be compiled)                                                                
 		RestartParticleSystems (); 	
     #endif
+        }
+
+        public void SetScale(float mult)
+        {
+            this.transform.localScale *= mult;
         }
 
         //Controlls the movement of the PlasmaBall. Its in a FixedUpdate because we are using physics.
