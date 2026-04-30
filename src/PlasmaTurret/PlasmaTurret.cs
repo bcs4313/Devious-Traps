@@ -57,6 +57,20 @@ namespace DeviousTraps.src
             }
         }
 
+        public override void OnNetworkSpawn()
+        {
+            SyncTransformClientRpc(transform.position, transform.rotation);
+        }
+
+        [ClientRpc]
+        public void SyncTransformClientRpc(Vector3 pos, Quaternion rot)
+        {
+            if(RoundManager.Instance.IsHost) { return; }
+
+            transform.position = pos;
+            transform.rotation = rot;
+        }
+
         float WindUpVolumeMultiplier = 0f;
 
         public BoxCollider ShiftColliderArea;
@@ -244,6 +258,8 @@ namespace DeviousTraps.src
             AudioReload.Stop();
         }
 
+        bool MidBurst = false;
+
         public void OnOffConditional()
         {
             float closestDist = Plugin.PlasmaTargetRange.Value;
@@ -279,7 +295,7 @@ namespace DeviousTraps.src
 
             if ((best != null && CurrentAmmo > 0) && !Inactive)
             {
-                if(TargetPlayer != best) { }
+                if (TargetPlayer != best) { }
 
                 SetTargetPlayerClientRpc(best.NetworkObject.NetworkObjectId);
                 TurnOnClientRpc(true);
@@ -325,9 +341,9 @@ namespace DeviousTraps.src
         float BurstCooldownTime = 0f;
         public void AITick()
         {
-            facePosition(TargetPlayer.transform.position);
-
             if(!RoundManager.Instance.IsHost) { return; }
+
+            facePosition(TargetPlayer.transform.position);
 
             if (BurstCooldownTime < 0f)
             {

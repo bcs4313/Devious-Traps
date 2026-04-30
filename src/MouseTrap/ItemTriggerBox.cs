@@ -33,6 +33,7 @@ namespace DeviousTraps.src.MouseTrap
 
         // detach mechanism
         bool itemInitialized = false;
+        float refreshItemInitCooldown = 1000; // refresh attach every 10 seconds, 1 second for first init
         public void Update()
         {
             if(!RoundManager.Instance.IsHost) { return; }
@@ -42,11 +43,13 @@ namespace DeviousTraps.src.MouseTrap
                 attachedObject = null;
             }
 
-            if(!itemInitialized && attachedObject && attachedObject.GetComponent<NetworkObject>().IsSpawned)
+            if((!itemInitialized || refreshItemInitCooldown < 0) && attachedObject && attachedObject.GetComponent<NetworkObject>().IsSpawned)
             {
                 itemInitialized = true;
                 AttachObjectClientRpc(attachedObject.NetworkObjectId);
+                refreshItemInitCooldown = 10000f;
             }
+            refreshItemInitCooldown -= Time.deltaTime;
         }
 
         public void OnTriggerEnter(Collider other)
