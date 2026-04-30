@@ -202,6 +202,7 @@ namespace DeviousTraps
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(LRADBlastPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(LRADImpactPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MouseTrapPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MouseTrapSpawnerPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaTurretPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaBallPrefab);
             Hooks();

@@ -72,6 +72,8 @@ namespace DeviousTraps.src
             //Debug.Log("Flame hit: " + other.gameObject);
             if (RoundManager.Instance.IsHost)
             {
+                if (dmgRamp <= 0f) { return; }
+
                 var go = other.gameObject;
                 PlayerControllerB ply = go.GetComponent<PlayerControllerB>();
                 EnemyAI ey = go.GetComponent<EnemyAI>();

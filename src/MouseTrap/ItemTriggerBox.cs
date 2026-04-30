@@ -2,13 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Netcode;
 using UnityEngine;
+using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace DeviousTraps.src.MouseTrap
 {
-    public class ItemTriggerBox : MonoBehaviour
+    public class ItemTriggerBox : NetworkBehaviour
     {
         public GrabbableObject attachedObject;
+        public Vector3 fixedPos;
+        public Quaternion fixedRot;
 
         public void LinkItemToTrigger(GrabbableObject obj)
         {
@@ -28,17 +32,26 @@ namespace DeviousTraps.src.MouseTrap
         }
 
         // detach mechanism
+        bool itemInitialized = false;
         public void Update()
         {
+            if(!RoundManager.Instance.IsHost) { return; }
             if(attachedObject && attachedObject.playerHeldBy != null)
             {
                 attachedObject.grabbable = true;
                 attachedObject = null;
             }
+
+            if(!itemInitialized && attachedObject && attachedObject.GetComponent<NetworkObject>().IsSpawned)
+            {
+                itemInitialized = true;
+                AttachObjectClientRpc(attachedObject.NetworkObjectId);
+            }
         }
 
         public void OnTriggerEnter(Collider other)
         {
+
             if (gameObject.layer != LayerMask.NameToLayer("Triggers"))
             {
                 return;
@@ -50,15 +63,37 @@ namespace DeviousTraps.src.MouseTrap
             PlayerControllerB ply = playerParentWalk(go);
 
             var cont = RoundManager.Instance.playersManager;
-            if (ply && cont.localPlayerController.NetworkObjectId == ply.NetworkObjectId)
+            if (ply)
             {
-                if (attachedObject) { attachedObject.grabbable = true; }
+                if (attachedObject) 
+                {
+                    attachedObject.grabbable = true;
+                }
             }
 
         }
 
+        [ClientRpc]
+        public void AttachObjectClientRpc(ulong uid)
+        {
+            var objs = FindObjectsOfType<GrabbableObject>();
+            foreach (var obj in objs)
+            {
+                if (uid == obj.NetworkObjectId)
+                {
+                    attachedObject = obj;
+                    obj.grabbable = false;
+                    obj.transform.localPosition = Vector3.zero;
+                    obj.transform.parent = transform.root.GetComponent<MouseTrap>().ScrapAttachment;
+                    obj.startFallingPosition = Vector3.zero;
+                    obj.targetFloorPosition = Vector3.zero;
+                }
+            }
+        }
+
         public void OnTriggerExit(Collider other)
         {
+
             if (gameObject.layer != LayerMask.NameToLayer("Triggers"))
             {
                 return;
@@ -70,9 +105,9 @@ namespace DeviousTraps.src.MouseTrap
             PlayerControllerB ply = playerParentWalk(go);
 
             var cont = RoundManager.Instance.playersManager;
-            if (ply && cont.localPlayerController.NetworkObjectId == ply.NetworkObjectId)
+            if (ply)
             {
-                if (attachedObject) { attachedObject.grabbable = false; }
+                attachedObject.grabbable = false;
             }
         }
 
