@@ -373,7 +373,7 @@ namespace DeviousTraps
 
             PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
             PlasmaDamage = Config.Bind("Plasma Turret", "Dmg Multiplier", 1, "Damage Multiplier for plasma projectiles. You can make them heal with negative values too. A multiplier of 1 deals 20 damage on contact. (default 1)");
-            PlasmaWindupTime = Config.Bind("Plasma Turret", "Windup Time", 1.3f, "How long a plasma turret takes before it starts firing projectiles at you (in seconds). (default 1.3)");
+            PlasmaWindupTime = Config.Bind("Plasma Turret", "Windup Time", 1.4f, "How long a plasma turret takes before it starts firing projectiles at you (in seconds). (default 1.4)");
             PlasmaReloadTime = Config.Bind("Plasma Turret", "Reload Time", 12f, "How long it takes for a plasma turret to reload (in seconds). (default 12)");
             PlasmaTargetRange = Config.Bind("Plasma Turret", "Range", 25f, "How far away a plasma turret can see you. They can't see through walls though. (default 25)");
             PlasmaBallsPerBurst = Config.Bind("Plasma Turret", "Burst Quantity", 3, "How many plasma balls are fired per burst? (default 3)");
@@ -739,7 +739,6 @@ namespace DeviousTraps
                 Min = -1000,
                 Max = 1000,
             });
-
 
             var PlasmaWindupTimeEntry = new FloatInputFieldConfigItem(PlasmaWindupTime, new FloatInputFieldOptions
             {

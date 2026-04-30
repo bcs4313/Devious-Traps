@@ -6,6 +6,7 @@ using Unity.Netcode;
 using GameNetcodeStuff;
 using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 using UnityEngine.AI;
+using Unity.Burst.CompilerServices;
 
 namespace DeviousTraps.src
 {
@@ -20,6 +21,8 @@ namespace DeviousTraps.src
         public GameObject ActivationGroup;
         public PlayerControllerB TargetPlayer;
         public Transform PlasmaSpawnPoint;
+
+        public Transform TurretSwivel;
 
         // Ammo Related
         bool Reloading = false;
@@ -44,7 +47,6 @@ namespace DeviousTraps.src
             AudioDoneReloading.volume = Plugin.PlasmaTurretVolume.Value;
             AudioPowerDown.volume = Plugin.PlasmaTurretVolume.Value;
             
-            /**
             if (RoundManager.Instance.IsHost)
             {
                 try
@@ -53,13 +55,15 @@ namespace DeviousTraps.src
                 }
                 catch (Exception e) { Debug.LogError(e); }
             }
-            **/
         }
 
         float WindUpVolumeMultiplier = 0f;
 
-        public BoxCollider ShiftColliderArea; 
+        public BoxCollider ShiftColliderArea;
 
+
+        public static Vector3 shiftVector = new Vector3(0, 1f, 0);
+        bool IsCeilingMounted = false;
         // Handles placing the plasma turret so it may appear on the roof
         // if possible given the samples
         public void PositionShiftForFiring()
@@ -72,47 +76,30 @@ namespace DeviousTraps.src
             Vector3 halfExtents = col.bounds.extents;
             LayerMask mask = StartOfRound.Instance.collidersAndRoomMaskAndDefault;
 
-            // candidate search directions
-            Vector3[] directions =
+            // push upward up to ~15m
+            float maxShift = 15f;
+            float step = 2f;
+
+            // shift phase 1 -> attempt to stick to roof
+            for (float d = step; d <= maxShift; d += step)
             {
-                transform.forward,
-                -transform.forward,
-                transform.right,
-                -transform.right
-            };
+                Vector3 candidate = transform.position + transform.up * d;
 
-            // push outward up to ~1.5m
-            const float maxShift = 3f;
-            const float step = 0.2f;
+                // shift phase 1 -> attempt to stick to roof
+                var rayResult = Physics.Raycast(candidate, shiftVector, out RaycastHit rayHit, maxShift, mask);
 
-            for (int i = 0; i < directions.Length; i++)
-            {
-                Vector3 dir = directions[i];
-
-                for (float d = step; d <= maxShift; d += step)
+                // basic raycast hit condition
+                if (rayResult)
                 {
-                    Vector3 candidate = transform.position + dir * d;
-
-                    // must sit on navmesh
-                    if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 0.35f, NavMesh.AllAreas))
-                        continue;
-
-                    // ensure collider box does not overlap world geometry
-                    bool intersect = Physics.CheckBox(
-                        hit.position + Vector3.up * 0.5f,
-                        halfExtents,
-                        Quaternion.identity,
-                        mask,
-                        QueryTriggerInteraction.Ignore
-                    );
-
-                    if (!intersect)
-                    {
-                        transform.position = hit.position;
-                        return;
-                    }
+                    Debug.Log("Devious Traps: Attached plasma turret to roof. Starting Position: " + transform.position + " End Position: " + rayHit.point);
+                    transform.position = rayHit.point;
+                    IsCeilingMounted = true;
+                    // flip the root transform upside down so the turret hangs from the ceiling
+                    transform.rotation = Quaternion.Euler(180f, transform.eulerAngles.y, transform.eulerAngles.z);
+                    return;
                 }
             }
+            Debug.Log("Devious Traps: Plasma Turret Roof attachment failure. This doesn't break the turret, it just means it will shoot on the floor instead.");
         }
 
         public void TerminalDisableTurretMethod()
@@ -270,7 +257,7 @@ namespace DeviousTraps.src
                 if (ply.isPlayerDead) continue;
 
                 // origin/target similar to vanilla turret
-                Vector3 origin = transform.position + Vector3.up * 1.2f; // tweak as needed
+                Vector3 origin = transform.position + (IsCeilingMounted ? -transform.up : transform.up) * 1.2f;
                 Vector3 target = ply.gameplayCamera.transform.position;
 
                 float dist = Vector3.Distance(origin, target);
@@ -355,12 +342,14 @@ namespace DeviousTraps.src
         public static float ycorrect = 90f;
         public static float zcorrect = 90f;
 
+        public static Quaternion FireRotationOffset = Quaternion.Euler(0f, 0, 0f);
+
         public void Fire()
         {
             // direction fired is toward player if within cone, otherwise turret orientation
             Vector3 toPlayer = (TargetPlayer.transform.position - PlasmaSpawnPoint.position).normalized;
-            float angle = Vector3.Angle(transform.forward, toPlayer);
-            Vector3 dir = angle <= 30f ? toPlayer : transform.forward;
+            float angle = Vector3.Angle(TurretSwivel.forward, toPlayer);
+            Vector3 dir = angle <= 30f ? toPlayer : TurretSwivel.forward;
 
             // Spawn with rotation matching the direction
             Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
@@ -369,8 +358,7 @@ namespace DeviousTraps.src
             // Common cases:
             //   +90 X  -> mesh was Y-forward
             //   +90 Y  -> mesh was X-forward
-            //Quaternion axisFix = Quaternion.Euler(0f, ycorrect, zcorrect);
-            Quaternion finalRot = rot;
+            Quaternion finalRot = rot * FireRotationOffset;
 
             GameObject plasmaBall = Instantiate(
                 Plugin.PlasmaBallPrefab,
@@ -423,13 +411,18 @@ namespace DeviousTraps.src
         // facePosition uses easing to prevent the turret from "snapping" to players, making encounters more fair
         public void facePosition(Vector3 pos)
         {
-            Vector3 directionToTarget = pos - transform.position;
+            Vector3 directionToTarget = pos - TurretSwivel.position;
             if (directionToTarget == Vector3.zero) return;
+
+            // when ceiling mounted the root is flipped 180, so transform direction into local space
+            if (IsCeilingMounted)
+                directionToTarget = transform.InverseTransformDirection(directionToTarget);
 
             // Desired rotation that points directly at the target on all axes
             Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
 
-            Vector3 currentEuler = transform.rotation.eulerAngles;
+            // read current in local space to match what we write back
+            Vector3 currentEuler = TurretSwivel.localRotation.eulerAngles;
             Vector3 targetEuler = targetRotation.eulerAngles;
 
             float speed = Time.deltaTime * Plugin.PlasmaRotationSpeed.Value;
@@ -440,7 +433,7 @@ namespace DeviousTraps.src
             float yaw = Mathf.MoveTowardsAngle(currentEuler.y, targetEuler.y, speed);
 
             // Keep roll (Z) at 0 so the turret doesn't tilt sideways.
-            transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+            TurretSwivel.localRotation = Quaternion.Euler(pitch, yaw, 0f);
         }
 
     }
