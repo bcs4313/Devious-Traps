@@ -184,7 +184,17 @@ and more!
 * Saw blades are less likely to get stuck in walls than before.
 * Saw blades are easier to push around.
 
-1.5.0
+
+1.6.0
+* Plasma turret added.
+* Plasma turrets shoot bouncy plasma balls from the ceiling that wildly fly back and forth.
+* Spawnrate defaults for saw turret and flame turret lowered (1.6->1.0)
+* Saw turret audio volumes adjusted to make them less harsh on the ears.
+* Mouse trap bait difficulty now applies to both the client and server.
+* Mouse trap bait more reliably attaches to the mouse trap on client, instead of falling through the trap.
+* Flame turrets no longer proc clients for 0 dmg when they rise out of the ground.
+
+1.6.3
 * Plasma turrets no longer can see through walls.
 * Flame turrets no longer can hit players through walls.
 * Fixed some inverted faces on the LRAD model.
