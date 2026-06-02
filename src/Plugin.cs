@@ -333,7 +333,7 @@ namespace DeviousTraps
             SawReloadTime = Config.Bind("Saw Turret", "Reload Time", 8f, "How long it takes for a saw turret to reload its sawblades (default 8)");
             SawFirerate = Config.Bind("Saw Turret", "Time Between Shots", 1.45f, "Length of time between each saw after windup. (default 1.45)");
             SawLaunchSpeed = Config.Bind("Saw Turret", "Projectile Speed", 3000f, "How fast are the saws launched from the saw turret? Note that the faster a saw travels, the more damage it will deal. Assume you are applying a force in Newtons (N) to the object. (default 3000)");
-            SawVolume = Config.Bind("Saw Turret", "Volume", 0.6f, "How loud are all sounds from this turret? (default 0.6)");
+            SawVolume = Config.Bind("Saw Turret", "Volume", 0.4f, "How loud are all sounds from this turret? (default 0.6)");
             SawRotationSpeed = Config.Bind("Saw Turret", "Rotation Speed", 100f, "How quickly does the Saw Turret rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 100)");
 
             FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
@@ -344,7 +344,7 @@ namespace DeviousTraps
             FlameSpinningTime = Config.Bind("Flame Turret", "Spinning Time", 3f, "How long does the flame turret spin for (attack duration)? In seconds. (default 3)");
             FlameRotationSpeed = Config.Bind("Flame Turret", "Rotation Speed", 120f, "How fast does a flame turret rotate when attacking (degrees per second)? (default 120)");
             SmokeCooldown = Config.Bind("Flame Turret", "Warning Interval", 20f, "How often a flame turret releases smoke to warn the player of its presence. The smoke release phase lasts for 4.5 seconds. (default 20)");
-            FlameVolume = Config.Bind("Flame Turret", "Volume", 0.6f, "How loud are all sounds from this turret? (default 0.6)");
+            FlameVolume = Config.Bind("Flame Turret", "Volume", 0.48f, "How loud are all sounds from this turret? (default 0.6)");
 
             LRADSpawnrate = Config.Bind("Sound Turret", "Spawnrate", 0.8f, "How often do these turrets spawn? (default 0.8)");
             LRADTargetRange = Config.Bind("Sound Turret", "Range", 50f, "How far away the LRAD (sound turret) can see you. They can't see through walls though. (default 50)");

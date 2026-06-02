@@ -7,6 +7,8 @@ using GameNetcodeStuff;
 using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 using UnityEngine.AI;
 using Unity.Burst.CompilerServices;
+using static UnityEngine.GraphicsBuffer;
+using static UnityEngine.UI.Image;
 
 namespace DeviousTraps.src
 {
@@ -55,6 +57,8 @@ namespace DeviousTraps.src
                 }
                 catch (Exception e) { Debug.LogError(e); }
             }
+
+            WorldMask = BuildWorldMask();
         }
 
         public override void OnNetworkSpawn()
@@ -258,6 +262,57 @@ namespace DeviousTraps.src
             AudioReload.Stop();
         }
 
+        private LayerMask WorldMask;        // environment-only mask
+        // Build a sane environment-only mask based on layer names
+        // === Replace BuildWorldMask() with this ===
+        private LayerMask BuildWorldMask()
+        {
+            // Layers considered "static world". Add/remove to match your project.
+            string[] include = new string[]
+            {
+                "Default",              // keep only if your static level uses Default
+                "Room",
+                "Colliders",
+                "MiscLevelGeometry",
+                "Terrain",
+                "Railing",
+                "DecalStickableSurface"
+            };
+            // Layers to force-exclude (players, enemies, triggers, ragdolls, etc.)
+            string[] exclude = new string[]
+            {
+                "Player",
+                "Enemy",
+                "Enemies",
+                "Players",
+                "Ragdoll",
+                "Trigger",
+                "Ignore Raycast",
+                "UI",
+            };
+            int mask = 0;
+            foreach (var n in include)
+            {
+                int li = LayerMask.NameToLayer(n);
+                if (li >= 0) mask |= 1 << li;
+                else Debug.LogWarning($"[WorldMask] Include layer \"{n}\" not found.");
+            }
+            foreach (var n in exclude)
+            {
+                int li = LayerMask.NameToLayer(n);
+                if (li >= 0) mask &= ~(1 << li);
+            }
+            // Also exclude our own current layer to avoid self-hits.
+            mask &= ~(1 << gameObject.layer);
+            if (mask == 0)
+            {
+                Debug.LogWarning("[WorldMask] Mask resolved to 0; falling back to Physics.DefaultRaycastLayers.");
+                mask = Physics.DefaultRaycastLayers & ~(1 << gameObject.layer);
+            }
+            //Debug.Log($"[WorldMask] Built mask={mask} (self layer excluded: {LayerMask.LayerToName(gameObject.layer)})");
+            return mask;
+        }
+
         bool MidBurst = false;
 
         public void OnOffConditional()
@@ -273,7 +328,7 @@ namespace DeviousTraps.src
                 if (ply.isPlayerDead) continue;
 
                 // origin/target similar to vanilla turret
-                Vector3 origin = transform.position + (IsCeilingMounted ? -transform.up : transform.up) * 1.2f;
+                Vector3 origin = transform.position + transform.up * 1.2f;
                 Vector3 target = ply.gameplayCamera.transform.position;
 
                 float dist = Vector3.Distance(origin, target);
@@ -282,7 +337,7 @@ namespace DeviousTraps.src
                 bool blocked = Physics.Linecast(
                     origin,
                     target,
-                    StartOfRound.Instance.collidersAndRoomMask,
+                    WorldMask,
                     QueryTriggerInteraction.Ignore
                 );
 
@@ -295,8 +350,6 @@ namespace DeviousTraps.src
 
             if ((best != null && CurrentAmmo > 0) && !Inactive)
             {
-                if (TargetPlayer != best) { }
-
                 SetTargetPlayerClientRpc(best.NetworkObject.NetworkObjectId);
                 TurnOnClientRpc(true);
             }
