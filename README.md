@@ -184,4 +184,10 @@ and more!
 * Saw blades are less likely to get stuck in walls than before.
 * Saw blades are easier to push around.
 
+1.5.0
+* Plasma turrets no longer can see through walls.
+* Flame turrets no longer can hit players through walls.
+* Fixed some inverted faces on the LRAD model.
+* LRAD turret now has a collision box for the speakers and base.
+
 </details>
