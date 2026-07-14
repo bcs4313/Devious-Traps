@@ -25,7 +25,7 @@ namespace DeviousTraps.src.SoundCannon
         public Animator GlitchAnimator;
 
         // 1 = max power, 0 = state is done, destroy self
-        float Power = 1f;
+        public float Power = 1f;
         float TimeToEnd = 20f;
         float max_TimeToEnd = 20f;
 
