@@ -34,20 +34,54 @@ namespace DeviousTraps.src.MouseTrap
         // detach mechanism
         bool itemInitialized = false;
         float refreshItemInitCooldown = 1000; // refresh attach every 10 seconds, 1 second for first init
+        bool itemCaptured = false;
+        Transform ScrapAttachment;
         public void Update()
         {
-            if(!RoundManager.Instance.IsHost) { return; }
-            if(attachedObject && attachedObject.playerHeldBy != null)
+            // store scrap attachment point
+            if (!ScrapAttachment) {
+                ScrapAttachment = transform.root.GetComponent<MouseTrap>().ScrapAttachment; 
+            }
+            
+            // object is permanently grabbable once held by a player
+            if (attachedObject && attachedObject.playerHeldBy != null)
             {
                 attachedObject.grabbable = true;
                 attachedObject = null;
+                itemCaptured = true;  // prevents the item from not being grabbable again later
+            }
+            if(itemCaptured && attachedObject) { attachedObject.grabbable = true; }  // a little redundant but I'm playing it safe
+
+            // lock item to position every frame until it is captured by the player
+            // (simpler logic than parenting)
+            if(!itemCaptured && attachedObject)
+            {
+                attachedObject.parentObject = null;
+                attachedObject.transform.parent = null;
+                attachedObject.transform.position = ScrapAttachment.transform.position;
+                attachedObject.startFallingPosition = ScrapAttachment.transform.position;
+                attachedObject.targetFloorPosition = ScrapAttachment.transform.position;
+
+                // simply updates the scan node subtext
+                /**
+                if (attachedObject.GetComponentInChildren<ScanNodeProperties>())
+                {
+                    if(attachedObject.scrapValue != 0)
+                    {
+                        attachedObject.GetComponentInChildren<ScanNodeProperties>().subText = "Value: " + attachedObject.scrapValue;
+                    }
+                }
+                */
             }
 
-            if((!itemInitialized || refreshItemInitCooldown < 0) && attachedObject && attachedObject.GetComponent<NetworkObject>().IsSpawned)
+
+            // initializer, for server only to notify clients
+            if (!RoundManager.Instance.IsHost) { return; }
+            if ((!itemInitialized || refreshItemInitCooldown < 0) && attachedObject && attachedObject.GetComponent<NetworkObject>().IsSpawned)
             {
                 itemInitialized = true;
-                AttachObjectClientRpc(attachedObject.NetworkObjectId);
-                refreshItemInitCooldown = 10000f;
+                AttachObjectClientRpc(attachedObject.NetworkObjectId, attachedObject.scrapValue);
+                refreshItemInitCooldown = UnityEngine.Random.Range(2f, 3f);
             }
             refreshItemInitCooldown -= Time.deltaTime;
         }
@@ -77,19 +111,21 @@ namespace DeviousTraps.src.MouseTrap
         }
 
         [ClientRpc]
-        public void AttachObjectClientRpc(ulong uid)
+        public void AttachObjectClientRpc(ulong uid, int value)
         {
             var objs = FindObjectsOfType<GrabbableObject>();
             foreach (var obj in objs)
             {
-                if (uid == obj.NetworkObjectId)
+                if (obj && uid == obj.NetworkObjectId && !attachedObject)
                 {
                     attachedObject = obj;
                     obj.grabbable = false;
-                    obj.transform.localPosition = Vector3.zero;
-                    obj.transform.parent = transform.root.GetComponent<MouseTrap>().ScrapAttachment;
-                    obj.startFallingPosition = Vector3.zero;
-                    obj.targetFloorPosition = Vector3.zero;
+                    attachedObject.GetComponentInChildren<ScanNodeProperties>().subText = "Value: " + value;
+                    // no more parenting logic. very unreliable
+                    //obj.transform.parent = transform.root.GetComponent<MouseTrap>().ScrapAttachment;
+                    //obj.startFallingPosition = I
+                    //obj.targetFloorPosition = Vector3.zero;
+                    //if (!obj.isHeld) { obj.FallToGround(); }
                 }
             }
         }
@@ -108,7 +144,7 @@ namespace DeviousTraps.src.MouseTrap
             PlayerControllerB ply = playerParentWalk(go);
 
             var cont = RoundManager.Instance.playersManager;
-            if (ply)
+            if (ply && !itemCaptured && attachedObject)
             {
                 attachedObject.grabbable = false;
             }

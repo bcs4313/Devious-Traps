@@ -17,6 +17,8 @@ namespace DeviousTraps.src.SoundCannon
         // --- Wall penetration config ---
         [Tooltip("Layers considered solid walls/props the round can punch through (and lose damage doing so).")]
         public LayerMask WallMask; // assign in inspector, e.g. Default | Room | InteractableObject
+        [Tooltip("Layers considered valid hit targets (players/enemies) for the sweep check.")]
+        public LayerMask HitMask; // assign in inspector, e.g. Player | Enemies
         [Tooltip("Physical radius of the round for sweep tests, keep small but non-zero.")]
         public float ProjectileRadius = 0.05f;
         [Tooltip("Total meters of wall thickness at which damage falloff bottoms out at MinDamageMultiplier.")]
@@ -53,8 +55,7 @@ namespace DeviousTraps.src.SoundCannon
                 Vector3 delta = Velocity * Time.deltaTime;
 
                 // Movement is untouched — the round always keeps flying at full speed/trajectory.
-                // We only use this cast to detect walls it passed through, purely to tally
-                // damage falloff. It never stops, slows, or redirects the projectile.
+                // We only use this cast to detect walls AND targets it passed through.
                 CheckWallsPassedThrough(prevPos, delta);
                 transform.position = prevPos + delta;
 
@@ -66,9 +67,9 @@ namespace DeviousTraps.src.SoundCannon
         }
 
         /// <summary>
-        /// Detects any wall the round crossed this frame and adds its thickness to
-        /// TotalWallThicknessPenetrated, which lowers CurrentDamageMultiplier. Purely
-        /// a damage-falloff tally — does not affect movement, speed, or trajectory at all.
+        /// Sweeps this frame's travel path once for players/enemies (HitMask) and once for
+        /// walls (WallMask). Targets found get routed into HIT(); wall hits only tally
+        /// thickness for damage falloff. Purely detection — never affects movement.
         /// </summary>
         private void CheckWallsPassedThrough(Vector3 prevPos, Vector3 delta)
         {
@@ -76,10 +77,19 @@ namespace DeviousTraps.src.SoundCannon
             if (dist <= 0f) return;
             Vector3 dir = delta / dist;
 
+            // players/enemies along the swept path — this is what needs to reach HIT(),
+            // NOT the wall collider found below.
+            RaycastHit[] targetHits = Physics.SphereCastAll(prevPos, ProjectileRadius, dir, dist);
+            foreach (var t in targetHits)
+            {
+                HIT(t.collider);
+            }
+
             if (!Physics.SphereCast(prevPos, ProjectileRadius, dir, out RaycastHit entryHit, dist, WallMask, QueryTriggerInteraction.Ignore))
                 return;
 
             Collider wall = entryHit.collider;
+
             float maxThicknessGuess = wall.bounds.size.magnitude + 0.1f;
             Vector3 farPoint = entryHit.point + dir * maxThicknessGuess;
 
@@ -89,18 +99,9 @@ namespace DeviousTraps.src.SoundCannon
                 thickness = Vector3.Distance(entryHit.point, exitHit.point);
             }
 
-            SpawnWallImpactFX(entryHit.point, entryHit.normal);
             TotalWallThicknessPenetrated += thickness;
         }
 
-        private void SpawnWallImpactFX(Vector3 point, Vector3 normal)
-        {
-            if (Plugin.LRADImpactPrefab == null) return;
-            var impact = Instantiate(Plugin.LRADImpactPrefab, point, UnityEngine.Quaternion.LookRotation(normal));
-            var netObj = impact.GetComponent<NetworkObject>();
-            if (netObj != null)
-                netObj.Spawn();
-        }
 
         public void LocalProximityShake()
         {
@@ -122,49 +123,106 @@ namespace DeviousTraps.src.SoundCannon
         }
 
         public float thicknessMult = 1f;
-        public static float thicknessPenaltyMultiplier = 0.05f;
-        public void OnTriggerEnter(Collider other)
+        public List<ulong> victims = new List<ulong>();  // sound wave can only hit a player ONCE
+        public void HIT(Collider other)
         {
-            //Debug.Log("Flame hit: " + other.gameObject);
             if (RoundManager.Instance.IsHost)
             {
                 var go = other.gameObject;
-                PlayerControllerB ply = go.GetComponent<PlayerControllerB>();
-                EnemyAI ey = go.GetComponent<EnemyAI>();
+                PlayerControllerB ply = playerParentWalk(go);
+                EnemyAI ey = enemyParentWalk(go);
+
+                //Debug.Log("HIT -> " + other + " walk -> " + ply);
                 if (ply)
                 {
                     thicknessMult = 1 + TotalWallThicknessPenetrated;
-                    int dmg = Mathf.RoundToInt(25 / (1 + (thicknessMult * thicknessPenaltyMultiplier)));
-                    Debug.Log("LRAD Wave Dmg Player: " + " wall thickness penalty: " + thicknessMult + " total base dmg (without wall -> 25) = " + dmg);
+                    int dmg = Mathf.RoundToInt(28 / (1 + (thicknessMult * Plugin.LRADDmgPenaltyMult.Value)));
+                    Debug.Log("LRAD Wave Dmg Player: " + " wall thickness penalty: " + thicknessMult + " total base dmg (without wall -> 28) = " + dmg);
 
-                    // rounding, no adjustment over 15 base dmg, for consistency
-                    if(dmg > 20)
+                    // rounding, no adjustment over base dmg, for consistency
+                    if (dmg > 23)
                     {
-                        dmg = 25;
+                        dmg = 28;
                     }
 
-                    if (dmg >= ply.health)
+                    if (victims != null && !victims.Contains(ply.NetworkObject.NetworkObjectId))
                     {
-                        KillPlayerClientRpc(ply.NetworkObject.NetworkObjectId);
-                    }
-                    else
-                    {
-                        DmgPlayerClientRpc(ply.NetworkObject.NetworkObjectId, dmg);
-                        var impact = Instantiate<GameObject>(Plugin.LRADImpactPrefab, this.transform.position, this.transform.rotation);
+                        victims.Add(ply.NetworkObject.NetworkObjectId);
+                        if (dmg >= ply.health)
+                        {
+                            KillPlayerClientRpc(ply.NetworkObject.NetworkObjectId);
+                        }
+                        else
+                        {
+                            DmgPlayerClientRpc(ply.NetworkObject.NetworkObjectId, dmg);
+                            var impact = Instantiate<GameObject>(Plugin.LRADImpactPrefab, this.transform.position, this.transform.rotation);
 
-                        // impact now receives a penalty to its power if dmg is 15 or lower
-                        ImpactFXState IState = impact.GetComponent<ImpactFXState>();
-                        IState.Power *= Mathf.Min(1f, 1 * ((dmg + 0.01f) / 20));
-                        IState.AttachToPlayer(ply.NetworkObjectId);
-                        impact.GetComponent<NetworkObject>().Spawn();
+                            // impact now receives a penalty to its power if dmg is 15 or lower
+                            ImpactFXState IState = impact.GetComponent<ImpactFXState>();
+                            var power = IState.Power * Mathf.Min(1f, 1 * ((dmg + 0.01f) / 20));
+                            IState.AttachToPlayer(ply.NetworkObjectId, power);
+                            impact.GetComponent<NetworkObject>().Spawn();
+                        }
                     }
                 }
                 if (ey)
                 {
-                    ey.HitEnemyClientRpc(6, -1, true);
+                    if (victims != null && !victims.Contains(ey.NetworkObject.NetworkObjectId))
+                    {
+                        victims.Add(ey.NetworkObject.NetworkObjectId);
+                        ey.HitEnemyClientRpc(6, -1, true);
+                    }
                 }
             }
         }
+
+
+        // goes up the parent tree until it finds player or null
+        public PlayerControllerB playerParentWalk(GameObject leaf)
+        {
+            while (leaf != null && leaf.GetComponent<PlayerControllerB>() == null)
+            {
+                if (leaf.transform.parent && leaf.transform.parent.gameObject)
+                {
+                    leaf = leaf.transform.parent.gameObject;
+                }
+                else
+                {
+                    leaf = null;
+                }
+            }
+
+            if (leaf && leaf.GetComponent<PlayerControllerB>())
+            {
+                return leaf.GetComponent<PlayerControllerB>();
+            }
+
+            return null;
+        }
+
+        // goes up the enemy tree until it finds player or null
+        public EnemyAI enemyParentWalk(GameObject leaf)
+        {
+            while (leaf != null && leaf.GetComponent<EnemyAI>() == null)
+            {
+                if (leaf.transform.parent && leaf.transform.parent.gameObject)
+                {
+                    leaf = leaf.transform.parent.gameObject;
+                }
+                else
+                {
+                    leaf = null;
+                }
+            }
+
+            if (leaf && leaf.GetComponent<EnemyAI>())
+            {
+                return leaf.GetComponent<EnemyAI>();
+            }
+
+            return null;
+        }
+
 
         [ClientRpc]
         public void DmgPlayerClientRpc(ulong netid, int amount)

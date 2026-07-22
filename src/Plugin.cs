@@ -26,7 +26,7 @@ namespace DeviousTraps
 {
     [BepInDependency(LethalLib.Plugin.ModGUID)]
     [BepInDependency("ainavt.lc.lethalconfig")]
-    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.6.0")]
+    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.6.5")]
     public class Plugin : BaseUnityPlugin
     {
         public static Harmony _harmony;
@@ -294,6 +294,7 @@ namespace DeviousTraps
         public static ConfigEntry<float> LRADFXVolume;
         public static ConfigEntry<float> LRADProjectileSpeed;
         public static ConfigEntry<float> LRADRotationSpeed;
+        public static ConfigEntry<float> LRADDmgPenaltyMult;
 
         public static ConfigEntry<float> MouseTrapSpawnrate;
         public static ConfigEntry<float> BigMTrapChance;
@@ -359,6 +360,7 @@ namespace DeviousTraps
             LRADVolume = Config.Bind("Sound Turret", "Turret Volume", 1f, "How loud are all sounds from this turret? (default 1)");
             LRADFXVolume = Config.Bind("Sound Turret", "FX Volume", 1f, "How loud are all sounds from the Disorientation/Impact effect? (default 1)");
             LRADRotationSpeed = Config.Bind("Sound Turret", "Rotation Speed", 60f, "How quickly does the LRAD rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 60)");
+            LRADDmgPenaltyMult = Config.Bind("Sound Turret", "Wall Penetration Penalty Multiplier", 0.25f, "LRAD turrets receive a dmg and visual fx penalty when going through walls (thicker wall = more penalty). This is a multiplier to that penalty. A higher number means a stronger penalty. (default 0.05)");
 
             MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn? Note that this is for 3 separate groups of mousetraps, not just one. (default 0.8)");
             BigMTrapChance = Config.Bind("Mouse Trap", "Big Mouse Trap Chance", 12f, "Percent chance for a mouse trap to spawn as a large one. (default 12%)");
@@ -634,6 +636,13 @@ namespace DeviousTraps
                 Max = 3600,
             });
 
+            var LRADDmgPenaltyMultEntry = new FloatInputFieldConfigItem(LRADDmgPenaltyMult, new FloatInputFieldOptions
+            {
+                RequiresRestart = false,
+                Min = 0f,
+                Max = 50,
+            });
+
             LethalConfigManager.AddConfigItem(LRADSpawnrateEntry);
             LethalConfigManager.AddConfigItem(LRADTargetRangeEntry);
             LethalConfigManager.AddConfigItem(LRADDmgMultEntry);
@@ -647,7 +656,7 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(LRADRotationSpeedEntry);
             LethalConfigManager.AddConfigItem(LRADVolumeEntry);
             LethalConfigManager.AddConfigItem(LRADFXVolumeEntry);
-
+            LethalConfigManager.AddConfigItem(LRADDmgPenaltyMultEntry);
 
             var MouseTrapSpawnrateEntry = new FloatInputFieldConfigItem(MouseTrapSpawnrate, new FloatInputFieldOptions
             {

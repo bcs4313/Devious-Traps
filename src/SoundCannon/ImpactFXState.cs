@@ -26,8 +26,9 @@ namespace DeviousTraps.src.SoundCannon
 
         // 1 = max power, 0 = state is done, destroy self
         public float Power = 1f;
+        public float PowerStart = -1;
         float TimeToEnd = 20f;
-        float max_TimeToEnd = 20f;
+        public float max_TimeToEnd = 20f;
 
         public System.Random rnd = new System.Random();
 
@@ -49,21 +50,40 @@ namespace DeviousTraps.src.SoundCannon
 
         public void Start()
         {
-            if (SoundImpact) { SoundImpact.volume = Plugin.LRADFXVolume.Value; }
-            if (SoundNoise) { SoundNoise.volume = Plugin.LRADFXVolume.Value; }
-            TimeToEnd = Plugin.LRADDisorientPeriod.Value;
+            if (SoundImpact) { SoundImpact.volume = Plugin.LRADFXVolume.Value * Power; }
+            if (SoundNoise) { SoundNoise.volume = Plugin.LRADFXVolume.Value * Power; }
+            //TimeToEnd = Plugin.LRADDisorientPeriod.Value;
             max_TimeToEnd = Plugin.LRADDisorientPeriod.Value;
         }
 
         // begin the madness
-        public void AttachToPlayer(ulong uid)
+        public void AttachToPlayer(ulong uid, float PStart)
         {
             if (Instances == null) { Instances = new List<ImpactFXState>(); }
+            pid = uid;  
+            Debug.Log("Devious Traps: LRAD Impact State attached to the player with uid: " + uid + " Power Start is: " + PStart + " TimeToEnd: " + TimeToEnd);
 
-            Power = 1f;
-            TimeToEnd = Plugin.LRADDisorientPeriod.Value;
-            pid = uid;
-            Debug.Log("Devious Traps: LRAD Impact State attached to the player with uid: " + uid);
+            PowerStart = PStart;
+
+            Instances.Add(this);
+        }
+
+        public void AStep()
+        {
+            Debug.Log("Devious Traps: LRAD Astep--");
+            if (Instances == null) { Instances = new List<ImpactFXState>(); }
+
+            Power = PowerStart;
+            if (PowerStart > 0.15)
+            {
+                TimeToEnd = Plugin.LRADDisorientPeriod.Value / (1 / PowerStart);
+            }
+            else
+            {
+                TimeToEnd = 0f;
+            }
+            if (SoundImpact) { SoundImpact.volume = Plugin.LRADFXVolume.Value * PowerStart; }
+            if (SoundNoise) { SoundNoise.volume = Plugin.LRADFXVolume.Value * PowerStart; }
 
             DestroyStep();
 
@@ -95,16 +115,18 @@ namespace DeviousTraps.src.SoundCannon
         {
             if (pid != 999999999 && RoundManager.Instance.IsHost)
             {
-                NotifyUsersOfEffectClientRpc(pid);
+                NotifyUsersOfEffectClientRpc(pid, PowerStart);
             }
         }
 
         [ClientRpc]
-        public void NotifyUsersOfEffectClientRpc(ulong NewPid)
+        public void NotifyUsersOfEffectClientRpc(ulong NewPid, float pStart)
         {
+            //Debug.Log("NotifyUsersOfEffectClientRpc: -> " + pStart);
             pid = NewPid;
-            PlayInitialHitClientRpc(pid);
+            PowerStart = pStart;
             spawned = true;
+            PlayInitialHit(pid);
         }
 
 
@@ -115,10 +137,40 @@ namespace DeviousTraps.src.SoundCannon
 
         public static float DrunkPushChancePerStepBase = 1f;  // 25% chance per step
         public static float DrunkPushMaxForce = 3f;  // check 4 times a second
+        bool isInitialized = false;
 
+
+        [ServerRpc (RequireOwnership = false)]
+        public void RequestPowerInitServerRpc()
+        {
+            //Debug.Log("RequestPowerInitServerRPC CALL: ");
+            NotifyUsersOfEffectClientRpc(pid, PowerStart);
+        }
+
+        float requestInitCooldown = 0.05f;
         public void Update()
         {
-            if(!spawned) { return; }
+            // backup spawn block for laggy players
+            if(!spawned) 
+            {
+                if(NetworkObject.IsSpawned && requestInitCooldown <= 0)
+                {
+                    RequestPowerInitServerRpc();
+                    requestInitCooldown = 0.05f;
+                }
+                requestInitCooldown -= Time.deltaTime;
+                return; 
+            }
+
+            /*
+            if (PowerStart == -1)
+            {
+                Debug.LogError("Impact FX LRAD Error: Power Start uninitialized. waiting for initialization");
+                return;
+            }
+            */
+
+            if (Power > PowerStart) { Power = PowerStart-0.01f; } 
 
             if (!LocalCheck(pid)) { return; }  // must be local player for effect
             // below here is local player only
@@ -142,10 +194,6 @@ namespace DeviousTraps.src.SoundCannon
             if (filter)
             {
                 filter.Deafness = Math.Clamp(Power * 3, 0, 1);
-            }
-            else
-            {
-                Debug.Log("Devious Traps IMPACT FX waiting for filter to spawn for deafness simulation");
             }
 
             if (ply.isPlayerDead) { Destroy(this.gameObject); }
@@ -197,9 +245,9 @@ namespace DeviousTraps.src.SoundCannon
             return false;
         }
 
-        [ClientRpc]
-        public void PlayInitialHitClientRpc(ulong uid)
+        public void PlayInitialHit(ulong uid)
         {
+            AStep();
             if (!LocalCheck(uid)) { return; }  // must be local player for effect
             StartCoroutine(PlayInitialHitCoroutine());
             spawned = true;
@@ -209,12 +257,12 @@ namespace DeviousTraps.src.SoundCannon
         // duration: 0.5s
         public IEnumerator PlayInitialHitCoroutine()
         {
-            Debug.Log("IMPACTFXHIT: " + Plugin.LRADDisorientPeriod.Value + ": S");
-            if (SoundImpact) { SoundImpact.volume = Plugin.LRADFXVolume.Value; }
-            if (SoundNoise) { SoundNoise.volume = Plugin.LRADFXVolume.Value; }
-            TimeToEnd = Plugin.LRADDisorientPeriod.Value;
+            Debug.Log("IMPACTFXHIT COR: " + Plugin.LRADDisorientPeriod.Value + ": wall penalty multiplier = " + PowerStart);
+            if (SoundImpact) { SoundImpact.volume = Plugin.LRADFXVolume.Value * Power; }
+            if (SoundNoise) { SoundNoise.volume = Plugin.LRADFXVolume.Value * Power; }
+            TimeToEnd = Plugin.LRADDisorientPeriod.Value * PowerStart;
             max_TimeToEnd = Plugin.LRADDisorientPeriod.Value;
-            SoundImpact.Play();
+            if (!SoundImpact.isPlaying) { SoundImpact.Play(); }
 
             var ply = RoundManager.Instance.playersManager.localPlayerController;
             try

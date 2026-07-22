@@ -462,7 +462,10 @@ namespace DeviousTraps.src.MouseTrap
         {
             if (stuckTo)
             {
-                stuckTo.carryWeight -= 0.05f; // 11 lb
+                if (stuckTo.carryWeight - 0.05f > 1)
+                {
+                    stuckTo.carryWeight -= 0.05f; // 11 lb
+                }
             }
         }
 
