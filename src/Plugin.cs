@@ -61,6 +61,12 @@ namespace DeviousTraps
         public static GameObject PlasmaBallPrefab;
         public static SpawnableMapObjectDef PlasmaTurretDef;
 
+        // Mortar Turret Prefabs
+        public static GameObject MortarTurretPrefab;
+        public static GameObject MortarShellPrefab;
+        public static SpawnableMapObjectDef MortarTurretDef;
+
+
         public void LogIfDebugBuild(string text)
         {
 #if DEBUG
@@ -111,15 +117,19 @@ namespace DeviousTraps
             PlasmaTurretDef = TrapBundle.LoadAsset<SpawnableMapObjectDef>("PlasmaTurretDef");
             PlasmaBallPrefab = TrapBundle.LoadAsset<GameObject>("PlasmaBall");
 
+            MortarTurretPrefab = TrapBundle.LoadAsset<GameObject>("MortarTurretPrefab");
+            MortarTurretDef = TrapBundle.LoadAsset<SpawnableMapObjectDef>("MortarTurretDef");
+            MortarShellPrefab = TrapBundle.LoadAsset<GameObject>("MortarShell");
+
             //Debug.Log("Saw Turret Prefab: " + SawTurretPrefab);
             //Debug.Log("Saw Blade Prefab: " + SawPrefab);
             //Debug.Log("Saw Turret Def: " + SawTurretDef);
             //Debug.Log("Flame Turret Prefab: " + FlameTurretPrefab);
             //Debug.Log("Flame Turret Def: " + FlameTurretDef);
             //Debug.Log("LRAD Impact FX " + LRADBlastPrefab);
-            //Debug.Log("LRAD Turret Def: " + LRADTurretPrefab);
-            //Debug.Log("Mouse Trap Prefab " + MouseTrapPrefab);
-            //Debug.Log("Mouse Trap Def: " + MouseTrapDef);
+            Debug.Log("Mortar Turret " + MortarTurretPrefab);
+            Debug.Log("Mortar Turret Def " + MortarTurretDef);
+            Debug.Log("Mortar Shell Prefab: " + MortarShellPrefab);
 
             UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
@@ -193,6 +203,19 @@ namespace DeviousTraps
                 return curve;
             });
 
+            // register phase 
+            // supply a lambda later for mapping the trap to various selectable levels...
+            LethalLib.Modules.MapObjects.RegisterMapObject(MortarTurretDef, LevelTypes.All, (SelectableLevel _) =>
+            {
+                var minTurrets = 0;
+                var maxTurrets = 4.8 * MortarConfig.MortarSpawnrate.Value;
+                AnimationCurve curve = new AnimationCurve(new Keyframe[]
+{
+                    new Keyframe(0f, (float)minTurrets, 0.267f, 0.267f, 0f, 0.246f),  // min turret reff from missile turret = 0
+                    new Keyframe(1f, (float)maxTurrets, 61f, 61f, 0.015f * (float)maxTurrets, 0f)  // max turret ref from missile turret = 6
+                });
+                return curve;
+            });
 
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(SawPrefab);
@@ -205,6 +228,8 @@ namespace DeviousTraps
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MouseTrapSpawnerPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaTurretPrefab);
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(PlasmaBallPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MortarTurretPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(MortarShellPrefab);
             Hooks();
         }
 
@@ -841,6 +866,9 @@ namespace DeviousTraps
             LethalConfigManager.AddConfigItem(PlasmaRotationSpeedEntry);
             LethalConfigManager.AddConfigItem(PlasmaBallLifetimeEntry);
             LethalConfigManager.AddConfigItem(PlasmaTurretVolumeEntry);
+
+            // finally... the mortar
+            MortarConfig.BindMortarConfig(this);
         }
 
         public static void PopulateAssets()

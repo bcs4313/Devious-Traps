@@ -42,6 +42,57 @@
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\Assembly_References_For_V81\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="DunGen">
+      <HintPath>..\Assembly_References_For_V81\DunGen.dll</HintPath>
+    </Reference>
+    <Reference Include="LethalCompanyInputUtils">
+      <HintPath>..\Assembly_References_For_V81\LethalCompanyInputUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="LethalConfig">
+      <HintPath>..\Assembly_References_For_V81\LethalConfig.dll</HintPath>
+    </Reference>
+    <Reference Include="LethalLib">
+      <HintPath>..\Assembly_References_For_V81\LethalLib.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_AmazingAssets.TerrainToMesh">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_AmazingAssets.TerrainToMesh.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_Assembly-CSharp">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_ClientNetworkTransform">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_ClientNetworkTransform.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_DissonanceVoip">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_DissonanceVoip.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_Facepunch Transport for Netcode for GameObjects">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_Facepunch Transport for Netcode for GameObjects.dll</HintPath>
+    </Reference>
+    <Reference Include="MMHOOK_Facepunch.Steamworks.Win64">
+      <HintPath>..\Assembly_References_For_V81\MMHOOK_Facepunch.Steamworks.Win64.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Burst">
+      <HintPath>..\Assembly_References_For_V81\Unity.Burst.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Collections">
+      <HintPath>..\Assembly_References_For_V81\Unity.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Collections.LowLevel.ILSupport">
+      <HintPath>..\Assembly_References_For_V81\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Netcode.Runtime">
+      <HintPath>..\Assembly_References_For_V81\Unity.Netcode.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\Assembly_References_For_V81\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
   <!-- Get references to DLL files. -->
   <ItemGroup>
@@ -51,50 +102,6 @@
     <Compile Update="src\Plugin.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\Assembly_References_For_V73\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="LethalConfig">
-      <HintPath>..\Assembly_References_For_V73\LethalConfig.dll</HintPath>
-    </Reference>
-    <Reference Include="LethalLib">
-      <HintPath>..\Assembly_References_For_V73\LethalLib.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_AmazingAssets.TerrainToMesh">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_AmazingAssets.TerrainToMesh.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_Assembly-CSharp">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_ClientNetworkTransform">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_ClientNetworkTransform.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_DissonanceVoip">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_DissonanceVoip.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_Facepunch Transport for Netcode for GameObjects">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_Facepunch Transport for Netcode for GameObjects.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_Facepunch.Steamworks.Win64">
-      <HintPath>..\Assembly_References_For_V73\MMHOOK_Facepunch.Steamworks.Win64.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Burst">
-      <HintPath>..\Assembly_References_For_V73\Unity.Burst.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Collections">
-      <HintPath>..\Assembly_References_For_V73\Unity.Collections.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Collections.LowLevel.ILSupport">
-      <HintPath>..\Assembly_References_For_V73\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Netcode.Runtime">
-      <HintPath>..\Assembly_References_For_V73\Unity.Netcode.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\Assembly_References_For_V73\UnityEngine.UI.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <!-- Allows us to use Rpc methods. See https://github.com/EvaisaDev/UnityNetcodePatcher -->
