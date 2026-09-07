@@ -8,17 +8,14 @@ using GameNetcodeStuff;
 
 namespace DeviousTraps.src
 {
-    /// Outdoor indirect-fire trap. Unlike the LRAD it does NOT need line of sight --
+    /// Outdoor indirect-fire trap. Unlike the LRAD it does NOT need a line of sight.
     /// it lobs a ripple of shells over cover into a scatter circle around the target.
     ///
-    /// Contract with the player:
+    /// Player to turret interactions:::
     ///   * loud, long charge-up  -> you get told it is coming
     ///   * shells arc visibly    -> you can watch them and read where they land
     ///   * min range dead zone   -> sprinting AT the mortar is the counterplay
     ///   * lever hook            -> temporary disable (SetDisabledForSeconds)
-    ///
-    /// Authority model matches LRAD: host makes every decision, clients are told
-    /// what to present. Rotation + audio run everywhere so the visuals stay in sync.
     public class MortarTurret : NetworkBehaviour
     {
         // ---------------------------------------------------------------- refs
@@ -59,9 +56,7 @@ namespace DeviousTraps.src
 
         private float ChargeTimer = 0f;
 
-        // =====================================================================
         //  LIFECYCLE
-        // =====================================================================
         public void Start()
         {
             TimeUntilDoneReloading = MortarConfig.MortarReloadTime.Value;
@@ -71,6 +66,8 @@ namespace DeviousTraps.src
             foreach (var a in new[] { AudioChargeUp, AudioFire, AudioReload,
                                       AudioDoneReloading, AudioPowerDown, AudioServoLoop })
                 if (a) a.volume = v;
+
+            AudioChargeUp.volume *= MortarConfig.MortarWarningVolume.Value;
 
             if (RoundManager.Instance.IsHost)
                 ProjectToRandomOutsideLocation();
@@ -192,10 +189,8 @@ namespace DeviousTraps.src
             Reloading = false;
         }
 
-        /// <summary>
-        /// Host-only. Picks a victim, charges up, then commits a fire mission.
-        /// NO line-of-sight test on purpose -- cover does not save you here.
-        /// </summary>
+        /// Host-only method. Picks a victim, charges up, then commits a fire mission.
+        /// NO LOS Req.
         private void HostAcquireAndCharge()
         {
             PlayerControllerB best = FindTarget();
@@ -271,7 +266,7 @@ namespace DeviousTraps.src
             }
         }
 
-        //  FIRE MISSION  --  the actual mortar behaviour
+        /// Firing a salvo works as individual "missions." The mission to kill the player lol
         /// Host builds the whole salvo up front: N impact points scattered in a
         /// circle around the target, then broadcasts them. Every client walks the
         /// same list so rotation and audio match; only the host spawns shells.
@@ -298,8 +293,9 @@ namespace DeviousTraps.src
             FireMissionClientRpc(impacts);
         }
 
-        /// Blend this shell's original aim point toward where the victim is right
-        /// now. 0 = the old locked salvo, 1 = full chase. The shell keeps its own
+        /// Blending this shell's original aim point toward where the victim is right
+        /// now (allowing some flexibility to Lethal Config). \
+        /// 0 = the old locked salvo, 1 = full chase. The shell keeps its own
         /// scatter offset so the spread pattern survives the re-aim.
         private Vector3 TrackedImpact(Vector3 original, int i)
         {

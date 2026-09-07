@@ -26,7 +26,7 @@ namespace DeviousTraps
 {
     [BepInDependency(LethalLib.Plugin.ModGUID)]
     [BepInDependency("ainavt.lc.lethalconfig")]
-    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.6.5")]
+    [BepInPlugin("DeviousTraps", "DeviousTraps", "1.7.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static Harmony _harmony;
@@ -349,7 +349,7 @@ namespace DeviousTraps
 
         public void bindVars()
         {
-            SawSpawnrate = Config.Bind("Saw Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
+            SawSpawnrate = Config.Bind("Saw Turret", "Spawnrate", 1.0f, "How often do these turrets spawn in general? (default 1.0)");
             SawFirerate = Config.Bind("Saw Turret", "Time Between Shots", 1.45f, "Length of time between each saw after windup. (default 1.45)");
             SawDmgMult = Config.Bind("Saw Turret", "Dmg Multiplier", 1.8f, "Damage multiplier for saw blades. Dmg is also dependent on the velocity of a saw blade. You can make them heal with negative values too. (default 1.8)");
             SawTargetRange = Config.Bind("Saw Turret", "Range", 25f, "How far away a saw turret can see you. They can't see through walls though. (default 25)");
@@ -362,7 +362,7 @@ namespace DeviousTraps
             SawVolume = Config.Bind("Saw Turret", "Volume", 0.4f, "How loud are all sounds from this turret? (default 0.6)");
             SawRotationSpeed = Config.Bind("Saw Turret", "Rotation Speed", 100f, "How quickly does the Saw Turret rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 100)");
 
-            FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
+            FlameSpawnrate = Config.Bind("Flame Turret", "Spawnrate", 1.0f, "How often do these turrets spawn in general? (default 1.0)");
             FlameDmgMult = Config.Bind("Flame Turret", "Dmg Multiplier", 2.56f, "Damage Multiplier for flame turrets. You can make them heal with negative values too. (default 2.56)");
             FlameTargetRange = Config.Bind("Flame Turret", "Range", 7f, "How far away a flame turret can see you. They can't see through walls though. (default 7)");
             FlameRisingTime = Config.Bind("Flame Turret", "Rising Time", 1.4f, "Time in seconds it takes for a flame turret to rise up and fire at you. (default 1.4)");
@@ -372,11 +372,11 @@ namespace DeviousTraps
             SmokeCooldown = Config.Bind("Flame Turret", "Warning Interval", 20f, "How often a flame turret releases smoke to warn the player of its presence. The smoke release phase lasts for 4.5 seconds. (default 20)");
             FlameVolume = Config.Bind("Flame Turret", "Volume", 0.48f, "How loud are all sounds from this turret? (default 0.6)");
 
-            LRADSpawnrate = Config.Bind("Sound Turret", "Spawnrate", 0.8f, "How often do these turrets spawn? (default 0.8)");
+            LRADSpawnrate = Config.Bind("Sound Turret", "Spawnrate", 0.8f, "How often do these turrets spawn in general? (default 0.8)");
             LRADTargetRange = Config.Bind("Sound Turret", "Range", 50f, "How far away the LRAD (sound turret) can see you. They can't see through walls though. (default 50)");
             LRADDmgMult = Config.Bind("Sound Turret", "Dmg Multiplier", 1f, "Damage Multiplier for sound turrets. You can make them heal with negative values too. (default 1)");
             LRADProjectileSpeed = Config.Bind("Sound Turret", "Projectile Speed Multiplier", 1.5f, "Multiplier for the Speed of the launched sound wave. (default 1.5)");
-            LRADReloadTime = Config.Bind("Sound Turret", "Time Between Shots", 60f, "Length of time before the sound cannon can fire again. (default 30)");
+            LRADReloadTime = Config.Bind("Sound Turret", "Time Between Shots", 60f, "Length of time before the sound cannon can fire again. (default 60)");
             LRADChargeTime = Config.Bind("Sound Turret", "Charge Up Time", 5.53f, "Time it takes for the LRAD to charge and fire a sound wave in seconds. (default 5.53)");
             LRADDisorientPeriod = Config.Bind("Sound Turret", "Disorientation Period", 20f, "How long deafness, visual fx, drunkness, and dizziness takes to fade away in seconds (default 20).");
             LRADDizzyMult = Config.Bind("Sound Turret", "Dizzyness multiplier", 1f, "How much the LRAD cannon messes around with your movement, causing you to sway unpredictably. (default 1)");
@@ -387,7 +387,7 @@ namespace DeviousTraps
             LRADRotationSpeed = Config.Bind("Sound Turret", "Rotation Speed", 60f, "How quickly does the LRAD rotate to face its target (degrees per second)? The lower the value, the easier it is to outmaneuver. (default 60)");
             LRADDmgPenaltyMult = Config.Bind("Sound Turret", "Wall Penetration Penalty Multiplier", 0.25f, "LRAD turrets receive a dmg and visual fx penalty when going through walls (thicker wall = more penalty). This is a multiplier to that penalty. A higher number means a stronger penalty. (default 0.05)");
 
-            MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn? Note that this is for 3 separate groups of mousetraps, not just one. (default 0.8)");
+            MouseTrapSpawnrate = Config.Bind("Mouse Trap", "Spawnrate", 0.8f, "How often do mouse traps spawn in general? Note that this is for 3 separate groups of mousetraps, not just one. (default 0.8)");
             BigMTrapChance = Config.Bind("Mouse Trap", "Big Mouse Trap Chance", 12f, "Percent chance for a mouse trap to spawn as a large one. (default 12%)");
             GiantMTrapChance = Config.Bind("Mouse Trap", "Giant Mouse Trap Chance", 8f, "Percent chance for a mouse trap to be giant. Giant traps have scrap as bait. You have to be really careful when stealing the bait! (default 8%)");
             SmallMTrapDmg = Config.Bind("Mouse Trap", "Small Mouse Trap Damage", 12, "Damage Amount for small traps. You can make them heal with negative values too. (default 12)");
@@ -399,7 +399,7 @@ namespace DeviousTraps
             MTrapWhitelist = Config.Bind("Mouse Trap", "Bait whitelist", "gift box, jar of pickles, gold bar, fancy lamp, golden cup, zed dog", "All scrap in this whitelist can be selected as bait for the giant trap. Enter the name that appears when you scan the scrap in-game. Comma separated list. (not case sensitive).");
             MTrapScrapBaitForgiveness = Config.Bind("Mouse Trap", "Mouse Trap Bait Forgiveness", 0.65f, "Alters the size of the hitbox that makes the giant mouse trap bait grabbable by players. The lower the value, the harder it is to get the item. 0.63 = insane, 0.65 = hard, 0.8 = forgiving, 1 = very forgiving (default 0.65)");
 
-            PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn? (default 1.0)");
+            PlasmaSpawnrate = Config.Bind("Plasma Turret", "Spawnrate", 1.0f, "How often do these turrets spawn in general? (default 1.0)");
             PlasmaDamage = Config.Bind("Plasma Turret", "Dmg Multiplier", 1, "Damage Multiplier for plasma projectiles. You can make them heal with negative values too. A multiplier of 1 deals 20 damage on contact. (default 1)");
             PlasmaWindupTime = Config.Bind("Plasma Turret", "Windup Time", 1.2f, "How long a plasma turret takes before it starts firing projectiles at you (in seconds). (default 1.4)");
             PlasmaReloadTime = Config.Bind("Plasma Turret", "Reload Time", 12f, "How long it takes for a plasma turret to reload (in seconds). (default 12)");

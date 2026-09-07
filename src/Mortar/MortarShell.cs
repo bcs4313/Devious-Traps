@@ -7,19 +7,14 @@ using Unity.Netcode;
 
 namespace DeviousTraps.src
 {
-    /// One shell in flight. Spawned by the host only, but every client runs the
+    /// Represents one shell in flight. Spawned by the host only, but every client runs the
     /// same integration locally so the arc looks identical everywhere without a
     /// NetworkTransform streaming 60 position updates a second.
     ///
     /// Authority split:
     ///   * clients  -> simulate position, spin, trail, whistle  (visuals only)
     ///   * host     -> decides WHEN it hits, sends ExplodeClientRpc(pos)
-    ///   * everyone -> runs Landmine.SpawnExplosion locally on that RPC
-    ///
-    /// That last bit is vanilla LC behaviour: SpawnExplosion damages
-    /// GameNetworkManager.Instance.localPlayerController if it is in range, so
-    /// each client applying it once produces exactly one set of damage per
-    /// player. Do NOT also apply damage host-side you'd double-dip.
+    ///   * everyone -> runs Landmine.SpawnExplosion locally
     public class MortarShell : NetworkBehaviour
     {
         [Header("Refs")]
@@ -71,9 +66,7 @@ namespace DeviousTraps.src
             }
         }
 
-        // =====================================================================
         //  FLIGHT
-        // =====================================================================
         private void Update()
         {
             if (!Live) return;
@@ -141,9 +134,7 @@ namespace DeviousTraps.src
             }
         }
 
-        // =====================================================================
-        //  DETONATION
-        // =====================================================================
+        //  DETONATION! lol
         private void HostDetonate(Vector3 pos)
         {
             if (Detonated) return;
