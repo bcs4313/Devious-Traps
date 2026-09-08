@@ -10,6 +10,7 @@ using BepInEx.Configuration;
 using BepInEx.Bootstrap;
 using System.Diagnostics;
 using UnityEngine;
+using LethalLevelLoader;  // bah humbug
 
 namespace DeviousTraps.src.Technical
 {
@@ -25,9 +26,32 @@ namespace DeviousTraps.src.Technical
         public static bool Enabled => Chainloader.PluginInfos.ContainsKey("imabatby.lethallevelloader");
 
         // Section for dynamically setting spawn weights
+        // This runs once on level load, before traps spawn.
         public static void SetTrapWeights()
         {
             if(!Enabled) { return; }  // this setting only applies with LLL (applies to almost ALL modpacks so...)  
+
+            // we are attempting to match to these!
+            String levelName = RoundManager.Instance.currentLevel.PlanetName;
+            String levelName2 = RoundManager.Instance.currentLevel.name;
+
+            // finding the exact dungeon name as a flow and as defined in lethal level loader
+            String dungeonFlowNameToMatch = RoundManager.Instance.dungeonGenerator.Generator.DungeonFlow.name;  // MAP to RM
+            String dungeonName = "";
+            var extendedFlows = UnityEngine.Object.FindObjectsOfType<ExtendedDungeonFlow>();
+            foreach(var flow in extendedFlows)
+            {
+                if(flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
+                {
+                    dungeonName = flow.DungeonName;
+                }
+            }
+
+            // error case
+            if(dungeonName == null || dungeonName.Equals(""))
+            {
+                UnityEngine.Debug.LogError("Devious Traps Dynamic Spawn Error: Couldn't find a matching dungeon name to a dungeon flow! Dynamic spawning will not work!");
+            }
 
             // all of these are affected by the config
             var targets = new List<String>() { "sawturrettrap","flameturret","lrad","mortarturretprefab","mousetrapspawner","plasmaturret" };
@@ -77,7 +101,7 @@ namespace DeviousTraps.src.Technical
                 // moon parsing
                 foreach(String pair in moonConfigEntries)
                 {
-
+                    LethalLevelLoader.
                 }
 
                 // interior parsing

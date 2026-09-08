@@ -56,6 +56,9 @@
     <Reference Include="LethalConfig">
       <HintPath>..\Assembly_References_For_V81\LethalConfig.dll</HintPath>
     </Reference>
+    <Reference Include="LethalLevelLoader">
+      <HintPath>..\Assembly_References_For_V81\EIOnly\LethalLevelLoader.dll</HintPath>
+    </Reference>
     <Reference Include="LethalLib">
       <HintPath>..\Assembly_References_For_V81\LethalLib.dll</HintPath>
     </Reference>
