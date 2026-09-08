@@ -21,11 +21,14 @@ using UnityEngine.Rendering;
 using GameNetcodeStuff;
 using DeviousTraps.src.SoundCannon;
 using DeviousTraps.src.MouseTrap;
+using DeviousTraps.src.Technical;
 
 namespace DeviousTraps
 {
     [BepInDependency(LethalLib.Plugin.ModGUID)]
     [BepInDependency("ainavt.lc.lethalconfig")]
+    // required for dynamically setting trap rarity through modded moons and interiors
+    [BepInDependency("imabatby.lethallevelloader", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin("DeviousTraps", "DeviousTraps", "1.7.0")]
     public class Plugin : BaseUnityPlugin
     {
@@ -869,6 +872,9 @@ namespace DeviousTraps
 
             // finally... the mortar
             MortarConfig.BindMortarConfig(this);
+
+            // Dynamic Spawnrate setup (interior and selectable levels)
+            SpawnManager.SetUpSettings(this);
         }
 
         public static void PopulateAssets()
