@@ -89,7 +89,7 @@ namespace DeviousTraps.src
 
             var MortarSpawnrateEntry = new FloatInputFieldConfigItem(MortarSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });

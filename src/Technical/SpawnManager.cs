@@ -205,7 +205,7 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry matches a corresponding moon tag
                         if (dungeonTags != null && dungeonTags.Contains(currentInterior))
                         {
-                            Log($"[{targetTurret}] moon entry '{entry}' matched (content tag) -- applying weight {weight}");
+                            Log($"[{targetTurret}] dungeon entry '{entry}' matched (content tag) -- applying weight {weight}");
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
                     }
@@ -295,7 +295,7 @@ namespace DeviousTraps.src.Technical
                         foundMatch = true;
                         // key 1 (assuming index 0 exists) is the target
                         Keyframe[] keys = indoorType.numberToSpawn.GetKeys(); // real local array, you own it now
-                        keys[1].m_InWeight *= weight;                          // mutating index 1 of YOUR array — this sticks
+                        keys[1].value *= weight;                         // mutating index 1 of YOUR array — this sticks
                         indoorType.numberToSpawn.SetKeys(keys);                 // write the whole array back into the curve
                     }
                 }
@@ -429,7 +429,7 @@ namespace DeviousTraps.src.Technical
         {
 
             GENERALINFO = pluginRef.Config.Bind("Dynamic Spawnrates", "General Info -IMPORTANT-", "", "This setting doesn't do anything, but it gives some context on how the settings work. These settings are host only and do NOT require a restart. You need LethalLevelLoader installed for it to work." +
-                "The only spawnrate entries that require a restart are the base spawnrates of a turret found in categories separate from this one. Moon and interior weights multiply to the base turret spawnrate if applicable in your configuration." +
+                "The base spawnrates of a turret found in categories separate from this one (doesn't require a restart). Moon and interior weights multiply to the base turret spawnrate if applicable in your configuration." +
                 "Just enter simple comma separated lists with colon separators, such as this: Vanilla:0.8,Modded:1.3,Experimentation:2. The values should be treated as multipliers to the base spawnrate, NOT as individual rarity values. (ignoring this will result" +
                 "in many, MANY turrets spawning absolutely everywhere)");
 

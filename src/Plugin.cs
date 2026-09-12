@@ -82,7 +82,7 @@ namespace DeviousTraps
             Logger = base.Logger;
             PopulateAssets();
             bindVars();
-            
+
             // load assemblies
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types)
@@ -241,11 +241,6 @@ namespace DeviousTraps
             // impactfx cleanup
             On.RoundManager.LoadNewLevel += (On.RoundManager.orig_LoadNewLevel orig, global::RoundManager self, int randomSeed, global::SelectableLevel newLevel) =>
             {
-                try
-                {
-                    SpawnManager.SetTrapWeights();
-                }
-                catch(Exception e) { Debug.LogError("Devious Traps LoadNewLevel Error: " + e.ToString() + " level will load as normal"); }
                 orig.Invoke(self, randomSeed, newLevel);
                 try
                 {
@@ -289,6 +284,16 @@ namespace DeviousTraps
                     Debug.LogError("Devious Traps: Mouse Trap clear error: " + e.ToString() + " this is only an issue if you have mouse traps attached to you and you can't remove them. Otherwise this is OK.");
                 }
             };
+
+            On.RoundManager.SpawnMapObjects += (On.RoundManager.orig_SpawnMapObjects orig, global::RoundManager self) =>
+            {
+                try
+                {
+                    SpawnManager.SetTrapWeights();
+                }
+                catch (Exception e) { Debug.LogError("Devious Traps LoadNewLevel Error: " + e.ToString() + " level will load as normal"); }
+                orig.Invoke(self);
+            };
         }
 
         // SETTINGS SECTION
@@ -317,13 +322,13 @@ namespace DeviousTraps
         public static ConfigEntry<float> LRADSpawnrate;
         public static ConfigEntry<float> LRADChargeTime;
         public static ConfigEntry<float> LRADReloadTime;
-        public static ConfigEntry<float> LRADTargetRange; 
+        public static ConfigEntry<float> LRADTargetRange;
         public static ConfigEntry<float> LRADDmgMult;
         public static ConfigEntry<float> LRADDisorientPeriod;
         public static ConfigEntry<float> LRADDizzyMult;
         public static ConfigEntry<float> LRADDrunknessMult;
         public static ConfigEntry<float> LRADFXMult;
-        public static ConfigEntry<float> LRADVolume; 
+        public static ConfigEntry<float> LRADVolume;
         public static ConfigEntry<float> LRADFXVolume;
         public static ConfigEntry<float> LRADProjectileSpeed;
         public static ConfigEntry<float> LRADRotationSpeed;
@@ -423,7 +428,7 @@ namespace DeviousTraps
 
             var FlameSpawnrateEntry = new FloatInputFieldConfigItem(FlameSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });
@@ -497,7 +502,7 @@ namespace DeviousTraps
 
             var SawSpawnrateEntry = new FloatInputFieldConfigItem(SawSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });
@@ -580,7 +585,7 @@ namespace DeviousTraps
 
             var LRADSpawnrateEntry = new FloatInputFieldConfigItem(LRADSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });
@@ -693,7 +698,7 @@ namespace DeviousTraps
 
             var MouseTrapSpawnrateEntry = new FloatInputFieldConfigItem(MouseTrapSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });
@@ -771,7 +776,7 @@ namespace DeviousTraps
 
             var PlasmaSpawnrateEntry = new FloatInputFieldConfigItem(PlasmaSpawnrate, new FloatInputFieldOptions
             {
-                RequiresRestart = true,
+                RequiresRestart = false,
                 Min = 0,
                 Max = 100000000,
             });
@@ -860,7 +865,7 @@ namespace DeviousTraps
                 Min = 0,
                 Max = 10000,
             });
-            
+
             LethalConfigManager.AddConfigItem(PlasmaSpawnrateEntry);
             LethalConfigManager.AddConfigItem(PlasmaDamageEntry);
             LethalConfigManager.AddConfigItem(PlasmaTargetRangeEntry);
