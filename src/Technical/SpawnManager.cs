@@ -43,7 +43,10 @@ namespace DeviousTraps.src.Technical
         // This runs once on level load, before traps spawn.
         public static void SetTrapWeights()
         {
-            EstablishStarterWeights();
+            // all of these are affected by the config (prefab name)
+            var targets = new List<String>() { "sawturrettrap", "flameturret", "lrad", "mortarturretprefab", "mousetrapspawner", "plasmaturret" };
+            EstablishStarterWeights(targets);
+            
             if (!Enabled) { Log("LethalLevelLoader not present, skipping dynamic spawn weights."); return; }  // this setting only applies with LLL (applies to almost ALL modpacks so...)  
 
             Log($"Starting SetTrapWeights() for devioustraps:");
@@ -73,9 +76,6 @@ namespace DeviousTraps.src.Technical
             {
                 UnityEngine.Debug.LogError("Devious Traps Dynamic Spawn Error: Couldn't find a matching dungeon name to a dungeon flow! Dynamic spawning will not work!");
             }
-
-            // all of these are affected by the config (prefab name)
-            var targets = new List<String>() { "sawturrettrap", "flameturret", "lrad", "mortarturretprefab", "mousetrapspawner", "plasmaturret" };
 
             foreach (String targetTurret in targets)  // target turret reflects in-game prefab name
             {
@@ -240,7 +240,9 @@ namespace DeviousTraps.src.Technical
                     {
                         foundMatch = true;
                         // key 1 (assuming index 0 exists) is the target
-                        indoorType.numberToSpawn.GetKeys()[1].m_InWeight *= weight;
+                        Keyframe[] keys = indoorType.numberToSpawn.GetKeys(); // real local array, you own it now
+                        keys[1].m_InWeight *= weight;                          // mutating index 1 of YOUR array — this sticks
+                        indoorType.numberToSpawn.SetKeys(keys);                 // write the whole array back into the curve
                     }
                 }
                 if (!foundMatch) { LogWarn($"ApplyWeightToSpawnCurve: no indoorMapHazard found for prefab '{prefabName}' on this level."); }
@@ -254,7 +256,7 @@ namespace DeviousTraps.src.Technical
 
         // resets the spawn curves of all turrets before multipliers are added
         // matching with the prefab's actual name in game
-        public static void EstablishStarterWeights(String[] turretTargets)
+        public static void EstablishStarterWeights(List<String> turretTargets)
         {
             IndoorMapHazard[] hazardList = RoundManager.Instance.currentLevel.indoorMapHazards;  // by technicality, all hazards are quote-unquote indoor
 
