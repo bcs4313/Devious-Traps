@@ -64,6 +64,7 @@ namespace DeviousTraps.src.Technical
             var extendedFlows = UnityEngine.Object.FindObjectsOfType<ExtendedDungeonFlow>();
             foreach (var flow in extendedFlows)
             {
+                Log($"Found ExtendedDungeonFlow: '{flow.name}' -> DungeonName '{flow.DungeonName}'");
                 if (flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
                 {
                     dungeonName = flow.DungeonName.ToLower().Trim();
@@ -85,7 +86,7 @@ namespace DeviousTraps.src.Technical
                 {
                     switch (targetTurret)
                     {
-                        case "sawturretrap":
+                        case "sawturrettrap":
                             moonConfigEntries = SawTurretMoonSpawnrates.Value.Trim().ToLower().Split(",");
                             interiorConfigEntries = SawTurretInteriorSpawnrates.Value.Trim().ToLower().Split(",");
                             break;
@@ -295,7 +296,7 @@ namespace DeviousTraps.src.Technical
         {
             switch (prefabName)
             {
-                case "sawturretrap":
+                case "sawturrettrap":
                     return Plugin.SawSpawnrate.Value;
                 case "flameturret":
                     return Plugin.FlameSpawnrate.Value;
