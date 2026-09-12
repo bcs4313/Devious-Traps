@@ -64,8 +64,9 @@ namespace DeviousTraps.src.Technical
             var extendedFlows = UnityEngine.Object.FindObjectsOfType<ExtendedDungeonFlow>();
             foreach (var flow in extendedFlows)
             {
-                Log($"Found ExtendedDungeonFlow: '{flow.name}' -> DungeonName '{flow.DungeonName}'");
-                if (flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
+                Log($"Found ExtendedDungeonFlow: '{flow.name}' -> DungeonName '{flow.DungeonName}'" + " -> " + flow.DungeonFlow.name);
+                if (flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()) ||
+                    flow.DungeonFlow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
                 {
                     dungeonName = flow.DungeonName.ToLower().Trim();
                 }
@@ -146,18 +147,27 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry is "modded" and the moon is not vanilla
                         if (currentMoon.Contains("modded"))
                         {
-                            if(moonIsModded()) { ApplyWeightToSpawnCurve(targetTurret, weight); }
+                            if(moonIsModded()) 
+                            {
+                                Log($"Applying weight for {targetTurret}, tag:modded weight {weight}");
+                                ApplyWeightToSpawnCurve(targetTurret, weight); 
+                            }
                         }
 
                         // apply weight if this config entry is "vanilla" and the moon is vanilla
                         if (currentMoon.Contains("vanilla"))
                         {
-                            if (!moonIsModded()) { ApplyWeightToSpawnCurve(targetTurret, weight); }
+                            if (!moonIsModded()) 
+                            {
+                                Log($"Applying weight for {targetTurret}, tag:vanilla weight {weight}");
+                                ApplyWeightToSpawnCurve(targetTurret, weight); 
+                            }
                         }
 
                         // apply weight if this config entry is "all" and the moon is vanilla
                         if (currentMoon.Contains("all"))
                         {
+                            Log($"Applying weight for {targetTurret}, tag:all weight {weight}");
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
                     }
