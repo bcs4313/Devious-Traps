@@ -73,6 +73,8 @@ namespace DeviousTraps.src.Technical
             }
             Log($"Resolved dungeon flow '{dungeonFlowNameToMatch}' -> dungeon name '{dungeonName}'");
 
+            List<String> dungeonTags = GetContentTagStringsOfDungeon(dungeonName);
+
             // error case
             if (dungeonName == null || dungeonName.Equals(""))
             {
@@ -137,7 +139,7 @@ namespace DeviousTraps.src.Technical
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
 
-                        // apply weight if this config entry matches a corresponding moon
+                        // apply weight if this config entry matches a corresponding moon tag
                         if (moonTags != null && moonTags.Contains(currentMoon))
                         {
                             Log($"[{targetTurret}] moon entry '{entry}' matched (content tag) -- applying weight {weight}");
@@ -192,6 +194,20 @@ namespace DeviousTraps.src.Technical
                             Log($"[{targetTurret}] interior entry '{entry}' matched -- applying weight {weight}");
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
+
+                        // apply weight if this config entry is "all" and the interior is vanilla
+                        if (currentInterior.Contains("all"))
+                        {
+                            Log($"Applying weight for {targetTurret}, tag:all weight {weight}");
+                            ApplyWeightToSpawnCurve(targetTurret, weight);
+                        }
+
+                        // apply weight if this config entry matches a corresponding moon tag
+                        if (dungeonTags != null && dungeonTags.Contains(currentInterior))
+                        {
+                            Log($"[{targetTurret}] moon entry '{entry}' matched (content tag) -- applying weight {weight}");
+                            ApplyWeightToSpawnCurve(targetTurret, weight);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -209,6 +225,33 @@ namespace DeviousTraps.src.Technical
                 if(ext.IsCurrentLevel) { return true; }
             }
             return false;
+        }
+
+
+        public static List<String> GetContentTagStringsOfDungeon(String dungeonName)
+        {
+            List<ContentTag> tags = null;
+            foreach (ExtendedDungeonFlow ext in UnityEngine.Object.FindObjectsOfType<ExtendedDungeonFlow>())
+            {
+                if (ext.DungeonName == dungeonName)
+                {
+                    tags = ext.ContentTags;
+                    break;
+                }
+            }
+
+            if (tags == null)
+            {
+                return null;
+            }
+
+            Log("Devious Traps: Parsing content tags...");
+            List<String> tagStrings = new List<String>();
+            foreach (ContentTag tag in tags)
+            {
+                tagStrings.Add(tag.contentTagName.ToLower().Trim());
+            }
+            return tagStrings;
         }
 
         public static List<String> GetContentTagStringsOfLevel(String planetName)
@@ -359,7 +402,7 @@ namespace DeviousTraps.src.Technical
             "Interior Spawn Weights that dynamically apply to the {0}. " +
             "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader. " +
             "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords.";
+            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. Only the keyword All and LLL Dungeon Tags are accepted.";
 
         // Binds the moon + interior spawnrate config entries for one turret, wires up its
         // LethalConfig text widgets, and hands the bound entries back via out params so the
