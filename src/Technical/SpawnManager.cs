@@ -22,18 +22,14 @@ namespace DeviousTraps.src.Technical
     */
     public class SpawnManager
     {
-        // flip to true for verbose Debug.Log tracing of the matching/weighting process.
-        // leave false for normal play -- these logs are spammy since SetTrapWeights runs every level load.
-        private const bool DebugMode = true;
-
         private static void Log(String message)
         {
-            if (DebugMode) { UnityEngine.Debug.Log("[DeviousTraps SpawnManager] " + message); }
+            if (debugMode.Value == true) { UnityEngine.Debug.Log("[DeviousTraps SpawnManager] " + message); }
         }
 
         private static void LogWarn(String message)
         {
-            if (DebugMode) { UnityEngine.Debug.LogWarning("[DeviousTraps SpawnManager] " + message); }
+            if (debugMode.Value == true) { UnityEngine.Debug.LogWarning("[DeviousTraps SpawnManager] " + message); }
         }
 
         // spawn manager will not run if this is false
@@ -124,8 +120,10 @@ namespace DeviousTraps.src.Technical
                 }
 
                 // moon parsing
-                foreach (String entry in moonConfigEntries)
+                for (int i = 0; i < moonConfigEntries.Length; i++)
                 {
+                    String entry = moonConfigEntries[i];
+                    Log("Looking at entry -> " + entry);
                     try
                     {
                         String[] pair = entry.Split(":");
@@ -149,7 +147,7 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry is "modded" and the moon is not vanilla
                         if (currentMoon.Contains("modded"))
                         {
-                            if(moonIsModded()) 
+                            if(moonIsModded(levelName)) 
                             {
                                 Log($"Applying weight for {targetTurret}, tag:modded weight {weight}");
                                 ApplyWeightToSpawnCurve(targetTurret, weight); 
@@ -159,7 +157,7 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry is "vanilla" and the moon is vanilla
                         if (currentMoon.Contains("vanilla"))
                         {
-                            if (!moonIsModded()) 
+                            if (!moonIsModded(levelName)) 
                             {
                                 Log($"Applying weight for {targetTurret}, tag:vanilla weight {weight}");
                                 ApplyWeightToSpawnCurve(targetTurret, weight); 
@@ -217,12 +215,12 @@ namespace DeviousTraps.src.Technical
             }
         }
 
-        public static bool moonIsModded()
+        public static bool moonIsModded(String PlanetName)
         {
             var ext_levels = UnityEngine.Object.FindObjectsOfType<ExtendedLevel>();
             foreach(var ext in ext_levels)
             {
-                if(ext.IsCurrentLevel) { return true; }
+                if(ext.SelectableLevel.PlanetName.ToLower().Trim() != PlanetName.ToLower().Trim()) { return true; }
             }
             return false;
         }
@@ -251,6 +249,8 @@ namespace DeviousTraps.src.Technical
             {
                 tagStrings.Add(tag.contentTagName.ToLower().Trim());
             }
+
+            Log("Devious Traps: Tags found for dungeon: " + tagStrings.ToString());
             return tagStrings;
         }
 
@@ -277,6 +277,8 @@ namespace DeviousTraps.src.Technical
             {
                 tagStrings.Add(tag.contentTagName.ToLower().Trim());
             }
+
+            Log("Devious Traps: Tags found for dungeon: " + tagStrings.ToString());
             return tagStrings;
         }
 
@@ -424,6 +426,8 @@ namespace DeviousTraps.src.Technical
             LethalConfigManager.AddConfigItem(interiorWidget);
         }
 
+
+        public static ConfigEntry<bool> debugMode;
         // only for creating the Lethal Config widgets for entering custom spawn weights for moons AND interiors
         public static void SetUpSettings(Plugin pluginRef)
         {
@@ -441,6 +445,17 @@ namespace DeviousTraps.src.Technical
 
             LethalConfigManager.AddConfigItem(GENERALINFOEntry);
 
+            debugMode = pluginRef.Config.Bind("Dynamic Spawnrates", "Debug Mode", false, "When true, Devious Traps will write a ton of debug information about the identified moon names, interiors," +
+                "and what multipliers were applied to traps as a result. If things aren't working as expected this will certainly assist you!");
+
+
+            var debugModeEntry = new TextInputFieldConfigItem(GENERALINFO, new TextInputFieldOptions()
+            {
+                RequiresRestart = false,
+            });
+
+            LethalConfigManager.AddConfigItem(GENERALINFOEntry);
+            LethalConfigManager.AddConfigItem(debugModeEntry);
             BindTurretSpawnrateSettings(pluginRef, "Saw Turret", out SawTurretMoonSpawnrates, out SawTurretInteriorSpawnrates);
             BindTurretSpawnrateSettings(pluginRef, "Flame Turret", out FlameTurretMoonSpawnrates, out FlameTurretInteriorSpawnrates);
             BindTurretSpawnrateSettings(pluginRef, "Sound Cannon (LRAD)", out SoundTurretMoonSpawnrates, out SoundTurretInteriorSpawnrates);
