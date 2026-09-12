@@ -22,6 +22,20 @@ namespace DeviousTraps.src.Technical
     */
     public class SpawnManager
     {
+        // flip to true for verbose Debug.Log tracing of the matching/weighting process.
+        // leave false for normal play -- these logs are spammy since SetTrapWeights runs every level load.
+        private const bool DebugMode = true;
+
+        private static void Log(String message)
+        {
+            if (DebugMode) { UnityEngine.Debug.Log("[DeviousTraps SpawnManager] " + message); }
+        }
+
+        private static void LogWarn(String message)
+        {
+            if (DebugMode) { UnityEngine.Debug.LogWarning("[DeviousTraps SpawnManager] " + message); }
+        }
+
         // spawn manager will not run if this is false
         public static bool Enabled => Chainloader.PluginInfos.ContainsKey("imabatby.lethallevelloader");
 
@@ -29,34 +43,38 @@ namespace DeviousTraps.src.Technical
         // This runs once on level load, before traps spawn.
         public static void SetTrapWeights()
         {
-            if(!Enabled) { return; }  // this setting only applies with LLL (applies to almost ALL modpacks so...)  
+            if (!Enabled) { Log("LethalLevelLoader not present, skipping dynamic spawn weights."); return; }  // this setting only applies with LLL (applies to almost ALL modpacks so...)  
+
+            Log($"Starting SetTrapWeights() for devioustraps:");
 
             // we are attempting to match to these!
             String levelName = RoundManager.Instance.currentLevel.PlanetName.ToLower().Trim();
             String levelName2 = RoundManager.Instance.currentLevel.name.ToLower().Trim();
+            Log($"Matching against level names: '{levelName}' / '{levelName2}'");
 
             // finding the exact dungeon name as a flow and as defined in lethal level loader
             String dungeonFlowNameToMatch = RoundManager.Instance.dungeonGenerator.Generator.DungeonFlow.name;  // MAP to RM
             String dungeonName = "";
             var extendedFlows = UnityEngine.Object.FindObjectsOfType<ExtendedDungeonFlow>();
-            foreach(var flow in extendedFlows)
+            foreach (var flow in extendedFlows)
             {
-                if(flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
+                if (flow.name.ToLower().Trim().Equals(dungeonFlowNameToMatch.ToLower().Trim()))
                 {
                     dungeonName = flow.DungeonName.ToLower().Trim();
                 }
             }
+            Log($"Resolved dungeon flow '{dungeonFlowNameToMatch}' -> dungeon name '{dungeonName}'");
 
             // error case
-            if(dungeonName == null || dungeonName.Equals(""))
+            if (dungeonName == null || dungeonName.Equals(""))
             {
                 UnityEngine.Debug.LogError("Devious Traps Dynamic Spawn Error: Couldn't find a matching dungeon name to a dungeon flow! Dynamic spawning will not work!");
             }
 
             // all of these are affected by the config (prefab name)
-            var targets = new List<String>() { "sawturrettrap","flameturret","lrad","mortarturretprefab","mousetrapspawner","plasmaturret" };
+            var targets = new List<String>() { "sawturrettrap", "flameturret", "lrad", "mortarturretprefab", "mousetrapspawner", "plasmaturret" };
 
-            foreach(String targetTurret in targets)  // target turret reflects in-game prefab name
+            foreach (String targetTurret in targets)  // target turret reflects in-game prefab name
             {
                 String[] moonConfigEntries = [];
                 String[] interiorConfigEntries = [];
@@ -93,7 +111,7 @@ namespace DeviousTraps.src.Technical
                             break;
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     UnityEngine.Debug.LogError("Devious Traps Dynamic Spawnrate Error: " + e + " -- Please check your Dynamic Spawnrate config for typos / human error. If not applicable you may report it.");
                 }
@@ -110,10 +128,11 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry matches the current level:
                         if (levelName.Contains(currentMoon.ToLower().Trim()) || levelName2.Contains(currentMoon.ToLower().Trim()))
                         {
+                            Log($"[{targetTurret}] moon entry '{entry}' matched -- applying weight {weight}");
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         UnityEngine.Debug.LogError("Devious Traps Dynamic Spawnrate Error: " + e + " -- Please check your Dynamic Spawnrate config for typos / human error. If not applicable you may report it.");
                     }
@@ -131,6 +150,7 @@ namespace DeviousTraps.src.Technical
                         // apply weight if this config entry matches the current level:
                         if (dungeonName.Contains(currentInterior.ToLower().Trim()))
                         {
+                            Log($"[{targetTurret}] interior entry '{entry}' matched -- applying weight {weight}");
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
                     }
@@ -149,19 +169,22 @@ namespace DeviousTraps.src.Technical
             try
             {
                 var level = RoundManager.Instance.currentLevel;
-                foreach(IndoorMapHazard indoorType in level.indoorMapHazards)
+                bool foundMatch = false;
+                foreach (IndoorMapHazard indoorType in level.indoorMapHazards)
                 {
                     if (indoorType.hazardType.prefabToSpawn.name.ToLower().Trim().Equals(prefabName))  // finally, we can apply the weight!
                     {
+                        foundMatch = true;
                         // key 1 (assuming index 0 exists) is the target
                         indoorType.numberToSpawn.GetKeys()[1].m_InWeight *= weight;
                     }
                 }
+                if (!foundMatch) { LogWarn($"ApplyWeightToSpawnCurve: no indoorMapHazard found for prefab '{prefabName}' on this level."); }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                UnityEngine.Debug.LogError("Devious Traps Dynamic Spawnrate Error (ApplyWeightToSpawnCurve): " + e + " - " 
-                    + prefabName + " with weight: " + weight +  " -- Please check your Dynamic Spawnrate config for typos / human error. If not applicable you may report it.");
+                UnityEngine.Debug.LogError("Devious Traps Dynamic Spawnrate Error (ApplyWeightToSpawnCurve): " + e + " - "
+                    + prefabName + " with weight: " + weight + " -- Please check your Dynamic Spawnrate config for typos / human error. If not applicable you may report it.");
             }
         }
 
@@ -173,21 +196,22 @@ namespace DeviousTraps.src.Technical
 
             // convert map hazard list to simple prefab name list
             // I don't like the nesting but its not too terrible (for me)
-            foreach(IndoorMapHazard hazard in hazardList)
+            foreach (IndoorMapHazard hazard in hazardList)
             {
                 // null safety
-                if(hazard == null || hazard.hazardType == null || hazard.hazardType.prefabToSpawn == null) { continue; }
+                if (hazard == null || hazard.hazardType == null || hazard.hazardType.prefabToSpawn == null) { continue; }
                 String prefabName = hazard.hazardType.prefabToSpawn.name.Trim().ToLower();
                 foreach (String targetTurret in turretTargets)
                 {
-                    if(targetTurret.Equals(prefabName))
+                    if (targetTurret.Equals(prefabName))
                     {
                         // reset to base curve
+                        Log($"Resetting '{prefabName}' to its base spawn curve.");
                         hazard.numberToSpawn = GenerateBaseCurve(prefabName);
                     }
                 }
             }
-        }   
+        }
 
         public AnimationCurve GenerateBaseCurve(String prefabName)
         {
@@ -225,71 +249,9 @@ namespace DeviousTraps.src.Technical
             return 1.0f;  // we should never reach this line
         }
 
-        /**
-         * 
-         * for reference as base weights
-         * 
-            // register phase 
-            // supply a lambda later for mapping the trap to various selectable levels...
-            LethalLib.Modules.MapObjects.RegisterMapObject(SawTurretDef, LevelTypes.All, (SelectableLevel _) =>
-            {
-                var minTurrets = 0;
-                var maxTurrets = 4.8 * Plugin.SawSpawnrate.Value;
-                AnimationCurve curve = new AnimationCurve(new Keyframe[]
-{
-                    new Keyframe(0f, (float)minTurrets, 0.267f, 0.267f, 0f, 0.246f),  // min turret reff from missile turret = 0
-                    new Keyframe(1f, (float)maxTurrets, 61f, 61f, 0.015f * (float)maxTurrets, 0f)  // max turret ref from missile turret = 6
-                });
-                return curve;
-            });
-
-        They all work off a 4.8 * Plugin.<turret>Spawnrate.Value system. Curves are overidden by the spawn manager
-         * */
-
-        /*
-        public struct MoonWeightRelationship
-        {
-            // matching to:
-            public String MoonName = "?";
-            public String MoonConsoleName = "?";
-            public string
-
-            // weight multiplier to spawnrate
-            public float WeightMultplier = 1.0f;
-
-            public MoonWeightRelationship() { }
-        }
-
-        public struct DungeonWeightRelationship
-        {
-            // matching to:
-            public String DungeonName = "?";
-
-            // weight multiplier to spawnrate
-            public float WeightMultplier = 1.0f;
-
-            public DungeonWeightRelationship() { }
-        }
-
-        public static MoonWeightRelationship getMoonRelationship(String levelName1, String levelName2)
-        {
-            var moons = UnityEngine.Object.FindObjectsOfType<SelectableLevel>();
-
-            foreach(var moon in moons)
-            {
-                if(levelName1 == moon.PlanetName || levelName2)
-                var rel = new MoonWeightRelationship();
-                rel.MoonName = moon.name;
-                rel.MoonConsoleName = moon.PlanetName;
-                moonRels.Add(rel);
-            }
-            return moonRels;
-        }
-        */
-
         // Lethal Config Section
         public static ConfigEntry<string> GENERALINFO;
-        
+
         public static ConfigEntry<string> SawTurretMoonSpawnrates;
         public static ConfigEntry<string> SawTurretInteriorSpawnrates;
 
@@ -308,6 +270,40 @@ namespace DeviousTraps.src.Technical
         public static ConfigEntry<string> MouseTrapMoonSpawnrates;
         public static ConfigEntry<string> MouseTrapInteriorSpawnrates;
 
+        // Tooltip templates -- {0} gets replaced with the turret's display name (e.g. "saw turret").
+        // The original had this paragraph pasted six times with only the turret name edited each time;
+        // this is the same text, just written once.
+        private const String MoonTooltipTemplate =
+            "Moon Spawn Weights that dynamically apply to the {0}. " +
+            "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
+            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.";
+
+        private const String InteriorTooltipTemplate =
+            "Interior Spawn Weights that dynamically apply to the {0}. " +
+            "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
+            "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
+            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.";
+
+        // Binds the moon + interior spawnrate config entries for one turret, wires up its
+        // LethalConfig text widgets, and hands the bound entries back via out params so the
+        // caller can assign them to that turret's usual static fields. Replaces what used to
+        // be six copy-pasted ~25-line blocks (one per turret) with one call per turret.
+        private static void BindTurretSpawnrateSettings(Plugin pluginRef, String displayName,
+            out ConfigEntry<string> moonEntry, out ConfigEntry<string> interiorEntry)
+        {
+            moonEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Moon Weights", "",
+                String.Format(MoonTooltipTemplate, displayName.ToLower()));
+
+            interiorEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Interior Weights", "",
+                String.Format(InteriorTooltipTemplate, displayName.ToLower()));
+
+            var moonWidget = new TextInputFieldConfigItem(moonEntry, new TextInputFieldOptions() { RequiresRestart = false });
+            var interiorWidget = new TextInputFieldConfigItem(interiorEntry, new TextInputFieldOptions() { RequiresRestart = false });
+
+            LethalConfigManager.AddConfigItem(moonWidget);
+            LethalConfigManager.AddConfigItem(interiorWidget);
+        }
+
         // only for creating the Lethal Config widgets for entering custom spawn weights for moons AND interiors
         public static void SetUpSettings(Plugin pluginRef)
         {
@@ -325,144 +321,12 @@ namespace DeviousTraps.src.Technical
 
             LethalConfigManager.AddConfigItem(GENERALINFOEntry);
 
-            // saw turret section
-            SawTurretMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Saw Turret Moon Weights", "", "Moon Spawn Weights that dynamically apply to the saw turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            SawTurretInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Saw Turret Interior Weights", "", "Interior Spawn Weights that dynamically apply to the saw turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var SawTurretMoonpawnratesEntry = new TextInputFieldConfigItem(SawTurretMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var SawTurretInteriorSpawnratesEntry = new TextInputFieldConfigItem(SawTurretInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(SawTurretMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(SawTurretInteriorSpawnratesEntry);
-
-            // flame turret section
-            FlameTurretMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Flame Turret Moon Weights", "", "Moon Spawn Weights that dynamically apply to the flame turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            FlameTurretInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Flame Turret Interior Weights", "", "Interior Spawn Weights that dynamically apply to the flame turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var FlameTurretMoonpawnratesEntry = new TextInputFieldConfigItem(FlameTurretMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var FlameTurretInteriorSpawnratesEntry = new TextInputFieldConfigItem(FlameTurretInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(FlameTurretMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(FlameTurretInteriorSpawnratesEntry);
-
-
-            // Sound turret section
-            SoundTurretMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Sound Cannon (LRAD) Moon Weights", "", "Moon Spawn Weights that dynamically apply to the sound Cannon. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            SoundTurretInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Sound Cannon (LRAD) Interior Weights", "", "Interior Spawn Weights that dynamically apply to the sound Cannon. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var SoundTurretMoonpawnratesEntry = new TextInputFieldConfigItem(SoundTurretMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var SoundTurretInteriorSpawnratesEntry = new TextInputFieldConfigItem(SoundTurretInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(SoundTurretMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(SoundTurretInteriorSpawnratesEntry);
-
-            // Plasma turret section
-            PlasmaTurretMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Plasma Turret Moon Weights", "", "Moon Spawn Weights that dynamically apply to the plasma turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            PlasmaTurretInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Plasma Turret Interior Weights", "", "Interior Spawn Weights that dynamically apply to the plasma turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var PlasmaTurretMoonpawnratesEntry = new TextInputFieldConfigItem(PlasmaTurretMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var PlasmaTurretInteriorSpawnratesEntry = new TextInputFieldConfigItem(PlasmaTurretInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(PlasmaTurretMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(PlasmaTurretInteriorSpawnratesEntry);
-
-            // Mortar turret section
-            MortarTurretMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Mortar Turret Moon Weights", "", "Moon Spawn Weights that dynamically apply to the mortar turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            MortarTurretInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Mortar Turret Interior Weights", "", "Interior Spawn Weights that dynamically apply to the mortar turret. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var MortarTurretMoonpawnratesEntry = new TextInputFieldConfigItem(MortarTurretMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var MortarTurretInteriorSpawnratesEntry = new TextInputFieldConfigItem(MortarTurretInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(MortarTurretMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(MortarTurretInteriorSpawnratesEntry);
-
-            // Mouse Trap section
-            MouseTrapMoonSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Mouse Trap Turret Moon Weights", "", "Moon Spawn Weights that dynamically apply to the mouse traps. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            MouseTrapInteriorSpawnrates = pluginRef.Config.Bind("Dynamic Spawnrates", "Mouse Trap Turret Interior Weights", "", "Interior Spawn Weights that dynamically apply to mouse traps. " +
-                "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
-                "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-                "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.");
-
-            var MouseTrapMoonpawnratesEntry = new TextInputFieldConfigItem(MouseTrapMoonSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            var MouseTrapInteriorSpawnratesEntry = new TextInputFieldConfigItem(MouseTrapInteriorSpawnrates, new TextInputFieldOptions()
-            {
-                RequiresRestart = false,
-            });
-
-            LethalConfigManager.AddConfigItem(MouseTrapMoonpawnratesEntry);
-            LethalConfigManager.AddConfigItem(MouseTrapInteriorSpawnratesEntry);
+            BindTurretSpawnrateSettings(pluginRef, "Saw Turret", out SawTurretMoonSpawnrates, out SawTurretInteriorSpawnrates);
+            BindTurretSpawnrateSettings(pluginRef, "Flame Turret", out FlameTurretMoonSpawnrates, out FlameTurretInteriorSpawnrates);
+            BindTurretSpawnrateSettings(pluginRef, "Sound Cannon (LRAD)", out SoundTurretMoonSpawnrates, out SoundTurretInteriorSpawnrates);
+            BindTurretSpawnrateSettings(pluginRef, "Plasma Turret", out PlasmaTurretMoonSpawnrates, out PlasmaTurretInteriorSpawnrates);
+            BindTurretSpawnrateSettings(pluginRef, "Mortar Turret", out MortarTurretMoonSpawnrates, out MortarTurretInteriorSpawnrates);
+            BindTurretSpawnrateSettings(pluginRef, "Mouse Trap Turret", out MouseTrapMoonSpawnrates, out MouseTrapInteriorSpawnrates);
         }
     }
 }

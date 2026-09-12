@@ -241,6 +241,11 @@ namespace DeviousTraps
             // impactfx cleanup
             On.RoundManager.LoadNewLevel += (On.RoundManager.orig_LoadNewLevel orig, global::RoundManager self, int randomSeed, global::SelectableLevel newLevel) =>
             {
+                try
+                {
+                    SpawnManager.SetTrapWeights();
+                }
+                catch(Exception e) { Debug.LogError("Devious Traps LoadNewLevel Error: " + e.ToString() + " level will load as normal"); }
                 orig.Invoke(self, randomSeed, newLevel);
                 try
                 {
