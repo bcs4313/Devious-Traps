@@ -53,16 +53,16 @@ namespace DeviousTraps.src.Technical
                 UnityEngine.Debug.LogError("Devious Traps Dynamic Spawn Error: Couldn't find a matching dungeon name to a dungeon flow! Dynamic spawning will not work!");
             }
 
-            // all of these are affected by the config
+            // all of these are affected by the config (prefab name)
             var targets = new List<String>() { "sawturrettrap","flameturret","lrad","mortarturretprefab","mousetrapspawner","plasmaturret" };
 
-            foreach(String target in targets)
+            foreach(String targetTurret in targets)  // target turret reflects in-game prefab name
             {
                 String[] moonConfigEntries = [];
                 String[] interiorConfigEntries = [];
                 try
                 {
-                    switch (target)
+                    switch (targetTurret)
                     {
                         case "sawturretrap":
                             moonConfigEntries = SawTurretMoonSpawnrates.Value.Trim().ToLower().Split(",");
@@ -89,7 +89,7 @@ namespace DeviousTraps.src.Technical
                             interiorConfigEntries = PlasmaTurretInteriorSpawnrates.Value.Trim().ToLower().Split(",");
                             break;
                         default:
-                            UnityEngine.Debug.LogError("Devious Traps Error: Could not find the turret prefab of target " + target + ". This turret will not have dynamic spawnrates!");
+                            UnityEngine.Debug.LogError("Devious Traps Error: Could not find the turret prefab of target " + targetTurret + ". This turret will not have dynamic spawnrates!");
                             break;
                     }
                 }
@@ -99,18 +99,162 @@ namespace DeviousTraps.src.Technical
                 }
 
                 // moon parsing
-                foreach(String pair in moonConfigEntries)
+                foreach (String entry in moonConfigEntries)
                 {
-                    LethalLevelLoader.
+                    try
+                    {
+                        String[] pair = entry.Split(":");
+                        String currentMoon = pair[0];
+                        float weight = float.Parse(pair[1]);
+
+                        // apply weight if this config entry matches the current level:
+                        if (levelName.Contains(currentMoon.ToLower().Trim()) || levelName2.Contains(currentMoon.ToLower().Trim()))
+                        {
+                            ApplyWeightToSpawnCurve(targetTurret, weight);
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        UnityEngine.Debug.LogError("Devious Traps Dynamic Spawnrate Error: " + e + " -- Please check your Dynamic Spawnrate config for typos / human error. If not applicable you may report it.");
+                    }
                 }
 
                 // interior parsing
-                foreach (String pair in interiorConfigEntries)
+                foreach (String entry in interiorConfigEntries)
                 {
 
                 }
             }
         }
+
+        // dig into the level, find the turret by prefab name,
+        // and increase the max keyframe by the target weight
+        public static void ApplyWeightToSpawnCurve(String prefabName, float weight)
+        {
+
+        }
+
+        // resets the spawn curves of all turrets before multipliers are added
+        // matching with the prefab's actual name in game
+        public void EstablishStarterWeights(String[] turretTargets)
+        {
+            IndoorMapHazard[] hazardList = RoundManager.Instance.currentLevel.indoorMapHazards;  // by technicality, all hazards are quote-unquote indoor
+
+            // convert map hazard list to simple prefab name list
+            // I don't like the nesting but its not too terrible (for me)
+            foreach(IndoorMapHazard hazard in hazardList)
+            {
+                // null safety
+                if(hazard == null || hazard.hazardType == null || hazard.hazardType.prefabToSpawn == null) { continue; }
+                String prefabName = hazard.hazardType.prefabToSpawn.name.Trim().ToLower();
+                foreach (String targetTurret in turretTargets)
+                {
+                    if(targetTurret.Equals(prefabName))
+                    {
+                        // reset to base curve
+                        hazard.numberToSpawn = GenerateBaseCurve(prefabName);
+                    }
+                }
+            }
+        }   
+
+        public AnimationCurve GenerateBaseCurve(String prefabName)
+        {
+            var minTurrets = 0;
+            var maxTurrets = 4.8 * GetBaseSpawnWeight(prefabName);
+            AnimationCurve curve = new AnimationCurve(new Keyframe[]
+{
+                    new Keyframe(0f, (float)minTurrets, 0.267f, 0.267f, 0f, 0.246f),  // min turret reff from missile turret = 0
+                    new Keyframe(1f, (float)maxTurrets, 61f, 61f, 0.015f * (float)maxTurrets, 0f)  // max turret ref from missile turret = 6
+            });
+            return curve;
+        }
+
+        public float GetBaseSpawnWeight(String prefabName)
+        {
+            switch (prefabName)
+            {
+                case "sawturretrap":
+                    return Plugin.SawSpawnrate.Value;
+                case "flameturret":
+                    return Plugin.FlameSpawnrate.Value;
+                case "lrad":
+                    return Plugin.LRADSpawnrate.Value;
+                case "mortarturretprefab":
+                    return MortarConfig.MortarSpawnrate.Value;
+                case "mousetrapspawner":
+                    return Plugin.MouseTrapSpawnrate.Value;
+                case "plasmaturret":
+                    return Plugin.PlasmaSpawnrate.Value;
+                default:
+                    UnityEngine.Debug.LogError("Devious Traps Error: (GetBaseSpawnWeight) " +
+                        "Could not find the turret prefab of target " + prefabName + ". This turret will not have dynamic spawnrates!");
+                    break;
+            }
+            return 1.0f;  // we should never reach this line
+        }
+
+        /**
+         * 
+         * for reference as base weights
+         * 
+            // register phase 
+            // supply a lambda later for mapping the trap to various selectable levels...
+            LethalLib.Modules.MapObjects.RegisterMapObject(SawTurretDef, LevelTypes.All, (SelectableLevel _) =>
+            {
+                var minTurrets = 0;
+                var maxTurrets = 4.8 * Plugin.SawSpawnrate.Value;
+                AnimationCurve curve = new AnimationCurve(new Keyframe[]
+{
+                    new Keyframe(0f, (float)minTurrets, 0.267f, 0.267f, 0f, 0.246f),  // min turret reff from missile turret = 0
+                    new Keyframe(1f, (float)maxTurrets, 61f, 61f, 0.015f * (float)maxTurrets, 0f)  // max turret ref from missile turret = 6
+                });
+                return curve;
+            });
+
+        They all work off a 4.8 * Plugin.<turret>Spawnrate.Value system. Curves are overidden by the spawn manager
+         * */
+
+        /*
+        public struct MoonWeightRelationship
+        {
+            // matching to:
+            public String MoonName = "?";
+            public String MoonConsoleName = "?";
+            public string
+
+            // weight multiplier to spawnrate
+            public float WeightMultplier = 1.0f;
+
+            public MoonWeightRelationship() { }
+        }
+
+        public struct DungeonWeightRelationship
+        {
+            // matching to:
+            public String DungeonName = "?";
+
+            // weight multiplier to spawnrate
+            public float WeightMultplier = 1.0f;
+
+            public DungeonWeightRelationship() { }
+        }
+
+        public static MoonWeightRelationship getMoonRelationship(String levelName1, String levelName2)
+        {
+            var moons = UnityEngine.Object.FindObjectsOfType<SelectableLevel>();
+
+            foreach(var moon in moons)
+            {
+                if(levelName1 == moon.PlanetName || levelName2)
+                var rel = new MoonWeightRelationship();
+                rel.MoonName = moon.name;
+                rel.MoonConsoleName = moon.PlanetName;
+                moonRels.Add(rel);
+            }
+            return moonRels;
+        }
+        */
 
         // Lethal Config Section
         public static ConfigEntry<string> GENERALINFO;
