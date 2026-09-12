@@ -43,6 +43,7 @@ namespace DeviousTraps.src.Technical
         // This runs once on level load, before traps spawn.
         public static void SetTrapWeights()
         {
+            EstablishStarterWeights();
             if (!Enabled) { Log("LethalLevelLoader not present, skipping dynamic spawn weights."); return; }  // this setting only applies with LLL (applies to almost ALL modpacks so...)  
 
             Log($"Starting SetTrapWeights() for devioustraps:");
@@ -51,6 +52,8 @@ namespace DeviousTraps.src.Technical
             String levelName = RoundManager.Instance.currentLevel.PlanetName.ToLower().Trim();
             String levelName2 = RoundManager.Instance.currentLevel.name.ToLower().Trim();
             Log($"Matching against level names: '{levelName}' / '{levelName2}'");
+
+            List<String> moonTags = GetContentTagStringsOfLevel(levelName);
 
             // finding the exact dungeon name as a flow and as defined in lethal level loader
             String dungeonFlowNameToMatch = RoundManager.Instance.dungeonGenerator.Generator.DungeonFlow.name;  // MAP to RM
@@ -122,13 +125,38 @@ namespace DeviousTraps.src.Technical
                     try
                     {
                         String[] pair = entry.Split(":");
-                        String currentMoon = pair[0];
+                        String currentMoon = pair[0].ToLower().Trim();
                         float weight = float.Parse(pair[1]);
 
                         // apply weight if this config entry matches the current level:
                         if (levelName.Contains(currentMoon.ToLower().Trim()) || levelName2.Contains(currentMoon.ToLower().Trim()))
                         {
                             Log($"[{targetTurret}] moon entry '{entry}' matched -- applying weight {weight}");
+                            ApplyWeightToSpawnCurve(targetTurret, weight);
+                        }
+
+                        // apply weight if this config entry matches a corresponding moon
+                        if (moonTags != null && moonTags.Contains(currentMoon))
+                        {
+                            Log($"[{targetTurret}] moon entry '{entry}' matched (content tag) -- applying weight {weight}");
+                            ApplyWeightToSpawnCurve(targetTurret, weight);
+                        }
+
+                        // apply weight if this config entry is "modded" and the moon is not vanilla
+                        if (currentMoon.Contains("modded"))
+                        {
+                            if(moonIsModded()) { ApplyWeightToSpawnCurve(targetTurret, weight); }
+                        }
+
+                        // apply weight if this config entry is "vanilla" and the moon is vanilla
+                        if (currentMoon.Contains("vanilla"))
+                        {
+                            if (!moonIsModded()) { ApplyWeightToSpawnCurve(targetTurret, weight); }
+                        }
+
+                        // apply weight if this config entry is "all" and the moon is vanilla
+                        if (currentMoon.Contains("all"))
+                        {
                             ApplyWeightToSpawnCurve(targetTurret, weight);
                         }
                     }
@@ -144,7 +172,7 @@ namespace DeviousTraps.src.Technical
                     try
                     {
                         String[] pair = entry.Split(":");
-                        String currentInterior = pair[0];
+                        String currentInterior = pair[0].ToLower().Trim();
                         float weight = float.Parse(pair[1]);
 
                         // apply weight if this config entry matches the current level:
@@ -160,6 +188,42 @@ namespace DeviousTraps.src.Technical
                     }
                 }
             }
+        }
+
+        public static bool moonIsModded()
+        {
+            var ext_levels = UnityEngine.Object.FindObjectsOfType<ExtendedLevel>();
+            foreach(var ext in ext_levels)
+            {
+                if(ext.IsCurrentLevel) { return true; }
+            }
+            return false;
+        }
+
+        public static List<String> GetContentTagStringsOfLevel(String planetName)
+        {
+            List<ContentTag> tags = null;
+            foreach(ExtendedLevel ext in UnityEngine.Object.FindObjectsOfType<ExtendedLevel>())
+            {
+                if(ext.SelectableLevel.PlanetName == planetName)
+                {
+                    tags = ext.ContentTags;
+                    break;
+                }
+            }
+
+            if(tags == null)
+            {
+                return null;
+            }
+
+            Log("Devious Traps: Parsing content tags...");
+            List<String> tagStrings = new List<String>();
+            foreach(ContentTag tag in tags)
+            {
+                tagStrings.Add(tag.contentTagName.ToLower().Trim());
+            }
+            return tagStrings;
         }
 
         // dig into the level, find the turret by prefab name,
@@ -190,7 +254,7 @@ namespace DeviousTraps.src.Technical
 
         // resets the spawn curves of all turrets before multipliers are added
         // matching with the prefab's actual name in game
-        public void EstablishStarterWeights(String[] turretTargets)
+        public static void EstablishStarterWeights(String[] turretTargets)
         {
             IndoorMapHazard[] hazardList = RoundManager.Instance.currentLevel.indoorMapHazards;  // by technicality, all hazards are quote-unquote indoor
 
@@ -213,7 +277,7 @@ namespace DeviousTraps.src.Technical
             }
         }
 
-        public AnimationCurve GenerateBaseCurve(String prefabName)
+        public static AnimationCurve GenerateBaseCurve(String prefabName)
         {
             var minTurrets = 0;
             var maxTurrets = 4.8 * GetBaseSpawnWeight(prefabName);
@@ -225,7 +289,7 @@ namespace DeviousTraps.src.Technical
             return curve;
         }
 
-        public float GetBaseSpawnWeight(String prefabName)
+        public static float GetBaseSpawnWeight(String prefabName)
         {
             switch (prefabName)
             {
@@ -276,13 +340,13 @@ namespace DeviousTraps.src.Technical
         private const String MoonTooltipTemplate =
             "Moon Spawn Weights that dynamically apply to the {0}. " +
             "Enter a comma separated list of pairs, each pair should follow the format of levelName:spawnrateMultiplier. The Selectable Level's name or the moon's name from the console is accepted. Names are not case sensitive or space sensitive" +
-            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.";
+            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. LLL Moon Tags are accepted here.";
 
         private const String InteriorTooltipTemplate =
             "Interior Spawn Weights that dynamically apply to the {0}. " +
-            "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader." +
+            "Enter a comma separated list of pairs, each pair should follow the format of interiorName:spawnrateMultiplier. You can partially enter an interior's name and it can be accepted. Based on the Dungeon Name value inside LethalLeverLoader. " +
             "Example 1: entering 'circus' for 'Circus Facility' is valid. Example 2: entering 'House' for 'liminal house' is valid. Example 3: entering 'Castle Grounds' for the 'Peachs Castle' interior is NOT valid. Values are not case sensitive or space sensitive. " +
-            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords. Content Tags are accepted.";
+            "The spawnrate multiplier is a decimal number that is multiplied with the base turret spawnrate. All, Vanilla, and Modded are accepted keywords.";
 
         // Binds the moon + interior spawnrate config entries for one turret, wires up its
         // LethalConfig text widgets, and hands the bound entries back via out params so the
@@ -291,10 +355,10 @@ namespace DeviousTraps.src.Technical
         private static void BindTurretSpawnrateSettings(Plugin pluginRef, String displayName,
             out ConfigEntry<string> moonEntry, out ConfigEntry<string> interiorEntry)
         {
-            moonEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Moon Weights", "",
+            moonEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Moon Weights", "All:1",
                 String.Format(MoonTooltipTemplate, displayName.ToLower()));
 
-            interiorEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Interior Weights", "",
+            interiorEntry = pluginRef.Config.Bind("Dynamic Spawnrates", $"{displayName} Interior Weights", "All:1",
                 String.Format(InteriorTooltipTemplate, displayName.ToLower()));
 
             var moonWidget = new TextInputFieldConfigItem(moonEntry, new TextInputFieldOptions() { RequiresRestart = false });
